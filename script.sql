@@ -1,88 +1,97 @@
-CREATE DATABASE dbViagens;
-USE dbViagens;
+create database dbViagens;
+use dbViagens;
 
 -- tabela cliente
-create table tbCliente(
-Sexo char(1) not null,
-Email varchar(50) not null,
-Telefone numeric(11) not null,
-Cpf numeric(11) not null,
-IdCliente int auto_increment primary key
+create table tbCliente (
+  Sexo char(1) not null,
+  Email varchar(50) not null,
+  Telefone numeric(11) not null,
+  Cpf numeric(11) not null,
+  IdCliente int auto_increment primary key
 );
 
 -- tabela funcionario
-create table tbFuncionario(
-Sexo char(1) not null,
-Email varchar(50) not null,
-Telefone numeric(11) not null,
-Cargo varchar(50) not null,
-Cpf numeric(11) not null,
-IdFuncionario int auto_increment primary key
+create table tbFuncionario (
+  Sexo char(1) not null,
+  Email varchar(50) not null,
+  Telefone numeric(11) not null,
+  Cargo varchar(50) not null,
+  Cpf numeric(11) not null,
+  IdFuncionario int auto_increment primary key
 );
 
 -- tabela produto 
-create table tbProduto(
-IdProduto int primary key auto_increment, 
-NomeProduto varchar(50) not null,
-Valor int not null,
-Descricao varchar(200) not null
+create table tbProduto (
+  IdProduto int auto_increment primary key, 
+  NomeProduto varchar(50) not null,
+  Valor int not null,
+  Descricao varchar(200) not null
 );
 
 -- tabela pacote
-create table tbPacote(
-IdPacote int primary key auto_increment,
-NomePacote varchar(50) not null,
-Descricao varchar(200) not null,
-Valor int not null
+create table tbPacote (
+  IdPacote int auto_increment primary key,
+  NomePacote varchar(50) not null,
+  Descricao varchar(200) not null,
+  Valor int not null
 );
 
 -- tabela produto pacote
-create table tbProdutoPacote(
-quantidade int not null,
-IdProduto int auto_increment not null, 
-foreign key(IdProduto) references tbProduto(IdProduto),
-IdPacote int auto_increment not null,
-foreign key(IdPacote) references tbPacote(IdPacote)
+create table tbProdutoPacote (
+  Quantidade int not null,
+  IdProduto int not null, 
+  IdPacote int not null
 );
 
 -- tabela venda
-create table tbVenda(
-IdVenda int primary key auto_increment,
-DataVenda datetime not null,
-TipoVenda enum('Avulsa', "Pacote") not null,
-IdCliente int auto_increment not null, 
-Valor int not null,
-foreign key (IdCliente) references tbCliente (IdCliente),
-IdFuncionario int auto_increment not null, 
-foreign key (IdFuncionario) references tbFuncionario (IdFuncionario)
+create table tbVenda (
+  IdVenda int auto_increment primary key,
+  DataVenda datetime not null,
+  TipoVenda enum('Avulsa', 'Pacote') not null,
+  IdCliente int not null,
+  Valor int not null,
+  IdFuncionario int not null
 );
 
 -- tabela viagem
-create table tbViagem(
-IdViagem int primary key auto_increment,
-DataRetorno datetime not null,
-Origem varchar(200) not null,
-Destino varchar(200) not null,
-TipoTransporte enum('Ônibus', 'Avião'),
-DataPartida datetime not null
+create table tbViagem (
+  IdViagem int auto_increment primary key,
+  DataRetorno datetime not null,
+  Origem varchar(200) not null,
+  Destino varchar(200) not null,
+  TipoTransporte enum('Ônibus', 'Avião') not null,
+  DataPartida datetime not null
 );
 
 -- tabela passagem
-create table tbPassagem(
-IdPassagem int primary key auto_increment,
-Assento int not null,
-DataCompra datetime not null,
-IdViagem int auto_increment not null, 
-foreign key (IdViagem) references tbViagem(IdViagem),
-IdCliente int auto_increment not null,
-foreign key(IdCliente) references tbCliente(IdCliente)
+create table tbPassagem (
+  IdPassagem int auto_increment primary key,
+  Assento int not null,
+  DataCompra datetime not null,
+  IdViagem int not null,
+  IdCliente int not null
 );
 
 -- tabela nota fiscal
-create table tbNotaFiscal(
-IdNF int primary key auto_increment,
-IdVenda int auto_increment not null,
-foreign key(IdVenda) references tbVenda(IdVenda),
-DataEmissao datetime
+create table tbNotaFiscal (
+  IdNF int auto_increment primary key,
+  IdVenda int not null,
+  DataEmissao datetime
 );
 
+-- criando agora as foreign keys via alter table
+
+alter table tbProdutoPacote
+add constraint Fk_ProdutoPacote_Produto foreign key (IdProduto) references TbProduto (IdProduto),
+add constraint Fk_ProdutoPacote_Pacote foreign key (IdPacote) references TbPacote (IdPacote);
+
+alter table tbVenda
+add constraint Fk_Venda_Cliente foreign key (IdCliente) references TbCliente (IdCliente),
+add constraint Fk_Venda_Funcionario foreign key (IdFuncionario) references TbFuncionario (IdFuncionario);
+
+alter table tbPassagem
+add constraint Fk_Passagem_Viagem foreign key (IdViagem) references TbViagem (IdViagem),
+add constraint Fk_Passagem_Cliente foreign key (IdCliente) references TbCliente (IdCliente);
+
+alter table tbNotaFiscal
+add constraint Fk_NotaFiscal_Venda foreign key (IdVenda) references TbVenda (IdVenda);
