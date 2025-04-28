@@ -143,7 +143,7 @@ begin
     VALUES (IdCliente, vIdFuncionario, CURDATE(), vValorPacote);
 	
 	-- pegando o id da venda recém-criada
-    SET vIdVenda = LAST_INSERT_ID();
+    SET vIdVenda = 1;
     
     -- inserindo na nota fiscal
        INSERT INTO NotaFiscal (IdVenda)
