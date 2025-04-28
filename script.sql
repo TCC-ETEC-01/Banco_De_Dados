@@ -118,12 +118,40 @@ insert into tbPacote (NomePacote, Descricao, Valor) values(
 ('Pacote Europa', 'Pacote completo para Paris com city tour e hotel 5 estrelas.', 12000.00)
 );
 
--- insert viagem
-insert into tbViagem (DataRetorno, Origem, Destino, TipoTransporte, DataPartida) values(
-('2025-06-10 20:00:00', 'São Paulo', 'Salvador', 'Avião', '2025-06-03 08:00:00'),
-('2025-07-15 18:00:00', 'Curitiba', 'Gramado', 'Ônibus', '2025-07-10 07:00:00'),
-('2025-09-01 10:00:00', 'Rio de Janeiro', 'Paris', 'Avião', '2025-08-25 22:00:00')
-);
+
+-- criando procedures
+delimiter $$
+create procedure ComprarPacote(
+in NomePacote varchar(50), 
+in IdCliente int 
+)
+begin
+    DECLARE vIdPacote INT;
+	DECLARE vValorPacote DECIMAL(10,2);
+    DECLARE vIdVenda INT;
+    DECLARE vIdFuncionario INT DEFAULT 1;
+    
+    -- buscando o id e o valor do pacote
+    select IdPacote, Valor
+    into vIdPacote, vValorPacote
+    from tbPacote
+    where NomePacote = NomePacote
+    limit 1;
+    
+    -- criando a venda
+  INSERT INTO tbVenda (IdCliente, IdFuncionario, DataVenda, Valor)
+    VALUES (IdCliente, vIdFuncionario, CURDATE(), vValorPacote);
+	
+	-- pegando o id da venda recém-criada
+    SET vIdVenda = LAST_INSERT_ID();
+    
+    -- inserindo na nota fiscal
+       INSERT INTO NotaFiscal (IdVenda)
+    VALUES (vIdVenda);
+end
+delimiter $$
+
+
 
 
 
