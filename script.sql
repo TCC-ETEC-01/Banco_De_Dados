@@ -126,10 +126,10 @@ in NomePacote varchar(50),
 in IdCliente int 
 )
 begin
-    DECLARE vIdPacote INT;
-	DECLARE vValorPacote DECIMAL(10,2);
-    DECLARE vIdVenda INT;
-    DECLARE vIdFuncionario INT DEFAULT 1;
+    declare vIdPacote int;
+	declare vValorPacote decimal(10,2);
+    declare vIdVenda int;
+    declare vIdFuncionario int default 1;
     
     -- buscando o id e o valor do pacote
     select IdPacote, Valor
@@ -139,17 +139,24 @@ begin
     limit 1;
     
     -- criando a venda
-  INSERT INTO tbVenda (IdCliente, IdFuncionario, DataVenda, Valor)
-    VALUES (IdCliente, vIdFuncionario, CURDATE(), vValorPacote);
+  insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor)
+    values (IdCliente, vIdFuncionario, CURDATE(), vValorPacote);
 	
 	-- pegando o id da venda recém-criada
-    SET vIdVenda = 1;
-    
+    set vIdVenda = 1;
     -- inserindo na nota fiscal
-       INSERT INTO NotaFiscal (IdVenda)
-    VALUES (vIdVenda);
+       insert into NotaFiscal (IdVenda)
+    values (vIdVenda);
 end
 delimiter $$
+
+-- inner joins
+select c.nome as Nome, p.nomePacote as NomePacote
+from tbCliente c
+inner join tbVenda v on c.IdCliente = v.IdCliente
+inner join tbFuncionario f on f.IdFuncionario = f.IdFuncionario
+inner join tbNotaFiscal NF on v.IdVenda = NF.IdVenda
+inner join tbPacote p on NF.IdPacote = p.IdPacote;
 
 
 
