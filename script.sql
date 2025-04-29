@@ -11,6 +11,18 @@ create table tbCliente (
   IdCliente int auto_increment primary key
 );
 
+-- tabela exclusao de cliente
+create table tbExclusaoCliente(
+  Nome varchar(50) not null,
+  Sexo char(1) not null,
+  Email varchar(50) not null,
+  Telefone numeric(11) not null,
+  Cpf numeric(11) not null,
+  IdCliente int not null, 
+  IdFuncionario int not null,
+  IdClienteLog int primary key auto_increment
+);
+
 -- tabela funcionario
 create table tbFuncionario (
   Nome varchar(50) not null,
@@ -158,8 +170,17 @@ inner join tbFuncionario f on f.IdFuncionario = f.IdFuncionario
 inner join tbNotaFiscal NF on v.IdVenda = NF.IdVenda
 inner join tbPacote p on NF.IdPacote = p.IdPacote;
 
-
-
-
-
-
+-- triggers
+delimiter $$
+create trigger exclusao
+before delete on tbCliente
+for each row
+begin
+	insert into tbExclusaoCliente(
+		IdCliente, Nome, Telefone, Email, Cpf, IdFuncionario, Sexo
+    )
+	values(
+    old.IdCliente, old.Nome, old.Telefone, old.Email, old.Cpf, IdFuncionario, Old.Sexo
+    );
+    end
+delimiter $$
