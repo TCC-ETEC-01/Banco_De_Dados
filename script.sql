@@ -4,7 +4,7 @@ use dbViagens;
 -- tabela cliente
 create table tbCliente (
   Nome varchar(50) not null,
-  Sexo char(1) not null,
+  Sexo enum('M', 'F') not null,
   Email varchar(50) not null,
   Telefone numeric(11) not null,
   Cpf numeric(11) not null,
@@ -14,7 +14,7 @@ create table tbCliente (
 -- tabela exclusao de cliente
 create table tbExclusaoCliente(
   Nome varchar(50) not null,
-  Sexo char(1) not null,
+  Sexo enum('M', 'F') not null,
   Email varchar(50) not null,
   Telefone numeric(11) not null,
   Cpf numeric(11) not null,
@@ -90,24 +90,26 @@ create table tbPassagem (
 create table tbNotaFiscal (
   IdNF int auto_increment primary key,
   IdVenda int not null,
+  IdPacote int not null,
   DataEmissao datetime
 );
 
--- criando agora as foreign keys via alter table
+-- criando foreign keys via alter table
 alter table tbProdutoPacote
-add constraint Fk_ProdutoPacote_Produto foreign key (IdProduto) references TbProduto (IdProduto),
-add constraint Fk_ProdutoPacote_Pacote foreign key (IdPacote) references TbPacote (IdPacote);
+add constraint Fk_ProdutoPacote_Produto foreign key (IdProduto) references tbProduto (IdProduto),
+add constraint Fk_ProdutoPacote_Pacote foreign key (IdPacote) references tbPacote (IdPacote);
 
 alter table tbVenda
-add constraint Fk_Venda_Cliente foreign key (IdCliente) references TbCliente (IdCliente),
-add constraint Fk_Venda_Funcionario foreign key (IdFuncionario) references TbFuncionario (IdFuncionario);
+add constraint Fk_Venda_Cliente foreign key (IdCliente) references tbCliente (IdCliente),
+add constraint Fk_Venda_Funcionario foreign key (IdFuncionario) references tbFuncionario (IdFuncionario);
 
 alter table tbPassagem
-add constraint Fk_Passagem_Viagem foreign key (IdViagem) references TbViagem (IdViagem),
-add constraint Fk_Passagem_Cliente foreign key (IdCliente) references TbCliente (IdCliente);
+add constraint Fk_Passagem_Viagem foreign key (IdViagem) references tbViagem (IdViagem),
+add constraint Fk_Passagem_Cliente foreign key (IdCliente) references tbCliente (IdCliente),
+add constraint Fk_Pacote_Cliente foreign key (IdPacote) references tbPacote (IdPacote);
 
 alter table tbNotaFiscal
-add constraint Fk_NotaFiscal_Venda foreign key (IdVenda) references TbVenda (IdVenda);
+add constraint Fk_NotaFiscal_Venda foreign key (IdVenda) references tbVenda (IdVenda);
 
 -- inserts
 -- insert cliente
@@ -147,7 +149,7 @@ begin
     select IdPacote, Valor
     into vIdPacote, vValorPacote
     from tbPacote
-    where NomePacote = NomePacote
+    where tbPacote.NomePacote = NomePacote
     limit 1;
     
     -- criando a venda
@@ -157,10 +159,10 @@ begin
 	-- pegando o id da venda recém-criada
     set vIdVenda = 1;
     -- inserindo na nota fiscal
-       insert into NotaFiscal (IdVenda)
+       insert into tbNotaFiscal (IdVenda)
     values (vIdVenda);
-end
-delimiter $$
+end  $$
+delimiter
 
 -- inner joins
 select c.nome as Nome, p.nomePacote as NomePacote
@@ -170,17 +172,22 @@ inner join tbFuncionario f on f.IdFuncionario = f.IdFuncionario
 inner join tbNotaFiscal NF on v.IdVenda = NF.IdVenda
 inner join tbPacote p on NF.IdPacote = p.IdPacote;
 
+select c.nome as Nome, c.Sexo as Sexo, c.cpf as Cpf, c.Email, c.Telefone
+from tbCliente cache
+inner join tbExclusaoCliente ec on c.IdCliente = ec.IdCliente;
+
 -- triggers
+-- exclusão de cliente
 delimiter $$
 create trigger exclusao
 before delete on tbCliente
 for each row
 begin
 	insert into tbExclusaoCliente(
-		IdCliente, Nome, Telefone, Email, Cpf, IdFuncionario, Sexo
+		IdCliente
     )
 	values(
-    old.IdCliente, old.Nome, old.Telefone, old.Email, old.Cpf, IdFuncionario, Old.Sexo
+    old.IdCliente
     );
-    end
-delimiter $$
+    end $$
+delimiter 
