@@ -7,7 +7,7 @@ create table tbCliente (
   Sexo enum('M', 'F') not null,
   Email varchar(50) not null,
   Telefone numeric(11) not null,
-  Cpf numeric(11) not null,
+  Cpf char(11) not null,
   IdCliente int auto_increment primary key
 );
 
@@ -23,8 +23,8 @@ create table tbFuncionario (
   Sexo char(1) not null,
   Email varchar(50) not null,
   Telefone numeric(11) not null,
-  Cargo enum('Administrador', 'Gerente', 'Vendedor') not null,
-  Cpf numeric(11) not null,
+  Cargo varchar(50) not null,
+  Cpf char(11) not null,
   IdFuncionario int auto_increment primary key
 );
 
@@ -40,7 +40,7 @@ create table tbProduto (
 create table tbPacote (
   IdPacote int auto_increment primary key,
   NomePacote varchar(50) not null,
-  Descricao varchar(200) not null,
+  Descricao text not null,
   Valor decimal(10,2) not null
 );
 
@@ -65,7 +65,6 @@ create table tbPassagem (
 
 
 -- criando foreign keys via alter table
-
 alter table tbPassagem
 add constraint FkViagem foreign key (IdViagem) references tbViagem(IdViagem),
 add constraint FkPassagemCliente foreign key (IdCliente) references tbCliente(IdCliente);
@@ -97,6 +96,7 @@ insert into tbPacote (NomePacote, Descricao, Valor) values(
 
 
 -- criando procedures
+/*
 delimiter $$
 create procedure ComprarPacote(
 in NomePacote varchar(50), 
@@ -126,12 +126,16 @@ begin
     values (vIdVenda);
 end  $$
 delimiter ;
+*/
 
 -- inner joins
 select p.NomeProduto as nome, p.Valor as balor, p.Descricao as descricao
 from tbProduto p
 inner join tbPacote pa on p.IdProduto = pa.IdProduto;
 
+select c.Nome as nome, c.Sexo as sexo, c.Cpf as cpf, c.Email as email, c.Telefone as telefone
+from tbCliente c
+inner join tbExclusaoCliente ec on c.IdCliente = ec.IdCliente;
 
 /* c.nome as Nome, p.nomePacote as NomePacote
 from tbCliente c
@@ -141,9 +145,7 @@ inner join tbNotaFiscal NF on v.IdVenda = NF.IdVenda
 inner join tbPacote p on NF.IdPacote = p.IdPacote;
 */
 
-select c.Nome as nome, c.Sexo as sexo, c.Cpf as cpf, c.Email as email, c.Telefone as telefone
-from tbCliente c
-inner join tbExclusaoCliente ec on c.IdCliente = ec.IdCliente;
+
 
 -- triggers
 -- exclusão de cliente
