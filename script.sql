@@ -49,7 +49,6 @@ create table tbViagem (
   DataPartida datetime not null
 );
 
-drop table tbPassagem;
 create table tbPassagem (
   IdPassagem int auto_increment primary key,
   Assento chaR(5) not null,
@@ -70,9 +69,16 @@ alter table tbPassagem
 add constraint FkViagem foreign key (IdViagem) references tbViagem(IdViagem),
 add constraint FkPassagemCliente foreign key (IdCliente) references tbCliente(IdCliente);
 
+alter table tbPassagem 
+add column IdPacote int,
+add constraint FkPacotePassagem foreign key(IdPacote) references tbPacote(IdPacote);
+
 alter table tbPacote 
 add constraint FkPassagemPacote foreign key(IdPassagem) references tbPassagem(IdPassagem),
 add constraint FkProdutoPacote foreign key(IdProduto) references tbProduto(IdProduto);
+
+alter table tbProduto add column IdPacote int,
+add constraint FkPacoteProduto foreign key(IdPacote) references tbPacote(IdPacote);
 
 -- inserts
 -- insert cliente
@@ -81,29 +87,46 @@ insert into tbCliente(Nome, Sexo, Email, Telefone, Cpf) values(
 ('Maria Souza', 'F', 'maria@email.com', 11988887777, 98765432100),
 ('Pedro Santos', 'M', 'pedro@email.com', 11977776666, 45678912300);
 
-
 -- insert funcionario
 insert into tbFuncionario(Nome, Sexo, Email, Telefone, Cpf, Cargo) values(
 'Ana Pereira', 'F', 'ana.pereira@email.com', 11955556666, 11223344556, 'Administrador'),
 ('Carlos Silva', 'M', 'carlos.silva@email.com', 11944445555, 22334455667, 'Gerente'),
 ('Juliana Costa', 'F', 'juliana.costa@email.com', 11933334444, 33445566778, 'Vendedor');
--- insert passagem
-insert into tbPassagem (IdViagem, IdCliente, Assento, Valor, Situacao)
-values (1, null, '12A', 750.00, 'Disponível');
+
 -- insert viagem
 insert into tbViagem (DataRetorno, Descricao, Origem, Destino, TipoTransporte, DataPartida)
 values 
 ('2025-05-20 14:00:00', 'Viagem para o Rio de Janeiro com hospedagem e city tour', 'São Paulo', 'Rio de Janeiro', 'Ônibus', '2025-05-18 08:00:00'),
 ('2025-06-10 18:00:00', 'Passagem aérea para Buenos Aires com pacote completo', 'São Paulo', 'Buenos Aires', 'Avião', '2025-06-08 12:00:00'),
-('2025-07-01 16:00:00', 'Excursão para Foz do Iguaçu com guias especializados', 'Curitiba', 'Foz do Iguaçu', 'Ônibus', '2025-06-29 07:00:00');
+('2025-07-01 16:00:00', 'Excursão para Foz do Iguaçu com guias especializados', 'Curitiba', 'Foz do Iguaçu', 'Ônibus', '2025-06-29 07:00:00'),
+('2025-08-15 20:00:00', 'Pacote família para Bahia', 'Rio de Janeiro', 'Salvador', 'Avião', '2025-08-10 09:00:00'),
+('2025-09-05 17:00:00', 'Tour wine em Mendoza', 'Porto Alegre', 'Mendoza', 'Avião', '2025-09-01 11:00:00');
+
+-- insert passagem
+insert into tbPassagem (IdViagem, IdCliente, Assento, Valor, Situacao)
+values (1, null, '12A', 750.00, 'Disponível');
+-- Passagem vinculada ao pacote 2 (Pacote Cultural BA)
+insert into tbPassagem (IdViagem, IdCliente, IdPacote, Assento, Valor, Situacao) VALUES
+(4, null, 2, '10B', 950.00, 'Disponível');
+-- Passagem vinculada ao pacote 3 (Pacote Vinícola)
+insert into tbPassagem (IdViagem, IdCliente, IdPacote, Assento, Valor, Situacao) VALUES
+(5, 2, 3, '05C', 1200.00, 'Reservada');
+insert into tbPassagem (IdViagem, IdCliente, Assento, Valor, Situacao) VALUES
+(2, null, '08D', 850.00, 'Disponível');
+
 -- insert pacote
 insert into tbPacote (IdProduto, IdPassagem, NomePacote, Descricao, Valor)
 values
-(1, 1, 'Pacote Verão 2025', 'Pacote completo para a viagem de verão com passagens e hospedagem', 1500.00);
+(1, null, 'Pacote Verão 2025', 'Pacote completo para a viagem de verão com passagens e hospedagem', 1500.00),
+(2, 1, 'Pacote Cultural BA', 'Viagem para Salvador com city tour histórico', 1800.00),
+(3, 2, 'Pacote Vinícola', 'Roteiro pelas melhores vinícolas de Mendoza', 2800.00);
 -- insert produto
 insert into tbProduto (NomeProduto, Descricao, Valor)
 values
-('Camiseta Estampada', 'Camiseta de algodão com estampa exclusiva da marca.', 59.90);
+('Camiseta Estampada', 'Camiseta de algodão com estampa exclusiva da marca.', 59.90),
+('Hospedagem Premium', 'Diária em hotel 5 estrelas com café da manhã', 350.00),
+('City Tour', 'Passeio guiado pelos principais pontos turísticos', 120.00),
+('Seguro Viagem', 'Cobertura completa para imprevistos', 90.00);
 
 -- selects
 select * from tbPassagem;
@@ -115,12 +138,29 @@ select * from tbViagem;
 select * from tbLogs;
 
 -- criando procedures
+
+-- procedure passagemPacote
+delimiter $$
+create procedure passagemPacote(
+	in vIdPacote int,
+    in vIdPassagem int
+)
+begin
+		insert into tbPassagem(IdPacote) values(vIdPacote)
+        insert into tbPacote(IdPassagem) values (vIdPassagem),
+        update tbPassagem 
+        set IdPacote = vIdPacote
+        where IdPassagem = vIdPassagem;
+        
+end $$
+delimiter ;
+
+
 delimiter $$
 create procedure situacaoPassagem(
 in Id int 
 )
 	begin
-	
 		select * from tbPassagem
         where IdCliente is null and Situacao = 'Disponivel';
     end $$
@@ -159,11 +199,11 @@ delimiter ;
 */
 
 -- inner joins
-select p.NomeProduto as nomeProd, p.Valor as valorProd, p.Descricao as descricaoProd, pass.Assento as assento, pass.Valor as valor, pass.Situacao as situacao
+select p.NomeProduto as nomeProd, p.Valor as valorProd, p.Descricao as descricaoProd, pass.Assento as assento, pass.Valor as valor, pass.Situacao as situacao, c.Nome as NomeCli, c.Cpf as CpfCli, c.Email as email, c.Telefone as telefone, c.Sexo as sexo
 from tbProduto p
 inner join tbPacote pa on p.IdProduto = pa.IdProduto
-inner join tbPassagem pass on pa.IdPacote = pass.IdPassagem;
-
+inner join tbPassagem pass on pa.IdPacote = pass.IdPassagem
+inner join tbCliente c on pass.IdPassagem = c.IdCliente;
 
 /* c.nome as Nome, p.nomePacote as NomePacote
 from tbCliente c
