@@ -49,6 +49,7 @@ create table tbViagem (
   DataPartida datetime not null
 );
 
+drop table tbPassagem;
 create table tbPassagem (
   IdPassagem int auto_increment primary key,
   Assento chaR(5) not null,
@@ -64,7 +65,6 @@ create table tbLogs(
     DataLog datetime,
     Acao varchar(50)
 );
-
 -- criando foreign keys via alter table
 alter table tbPassagem
 add constraint FkViagem foreign key (IdViagem) references tbViagem(IdViagem),
@@ -99,7 +99,7 @@ values
 -- insert pacote
 insert into tbPacote (IdProduto, IdPassagem, NomePacote, Descricao, Valor)
 values
-(1, 4, 'Pacote Verão 2025', 'Pacote completo para a viagem de verão com passagens e hospedagem', 1500.00);
+(1, 1, 'Pacote Verão 2025', 'Pacote completo para a viagem de verão com passagens e hospedagem', 1500.00);
 -- insert produto
 insert into tbProduto (NomeProduto, Descricao, Valor)
 values
@@ -159,9 +159,11 @@ delimiter ;
 */
 
 -- inner joins
-select p.NomeProduto as nome, p.Valor as valor, p.Descricao as descricao
+select p.NomeProduto as nomeProd, p.Valor as valorProd, p.Descricao as descricaoProd, pass.Assento as assento, pass.Valor as valor, pass.Situacao as situacao
 from tbProduto p
-inner join tbPacote pa on p.IdProduto = pa.IdProduto;
+inner join tbPacote pa on p.IdProduto = pa.IdProduto
+inner join tbPassagem pass on pa.IdPacote = pass.IdPassagem;
+
 
 /* c.nome as Nome, p.nomePacote as NomePacote
 from tbCliente c
