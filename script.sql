@@ -23,11 +23,13 @@ create table tbFuncionario (
   IdFuncionario int auto_increment primary key
 );
 
+drop table tbProduto;
 create table tbProduto (
   IdProduto int auto_increment primary key, 
   NomeProduto varchar(50) not null,
   Valor decimal(10,2) not null,
-  Descricao Text not null
+  Descricao Text not null,
+  Quantidade int not null
 );
 
 create table tbPacote (
@@ -49,9 +51,10 @@ create table tbViagem (
   DataPartida datetime not null
 );
 
+drop table tbPassagem;
 create table tbPassagem (
   IdPassagem int auto_increment primary key,
-  Assento chaR(5) not null,
+  Assento char(5) not null,
   Valor decimal(10,2) not null,
   DataCompra datetime,
   IdViagem int not null,
@@ -68,10 +71,6 @@ create table tbLogs(
 alter table tbPassagem
 add constraint FkViagem foreign key (IdViagem) references tbViagem(IdViagem),
 add constraint FkPassagemCliente foreign key (IdCliente) references tbCliente(IdCliente);
-
-alter table tbPassagem 
-add column IdPacote int,
-add constraint FkPacotePassagem foreign key(IdPacote) references tbPacote(IdPacote);
 
 alter table tbPacote 
 add constraint FkPassagemPacote foreign key(IdPassagem) references tbPassagem(IdPassagem),
@@ -106,10 +105,10 @@ values
 insert into tbPassagem (IdViagem, IdCliente, Assento, Valor, Situacao)
 values (1, null, '12A', 750.00, 'Disponível');
 -- Passagem vinculada ao pacote 2 (Pacote Cultural BA)
-insert into tbPassagem (IdViagem, IdCliente, IdPacote, Assento, Valor, Situacao) VALUES
+insert into tbPassagem (IdViagem, IdCliente, Assento, Valor, Situacao) VALUES
 (4, null, 2, '10B', 950.00, 'Disponível');
 -- Passagem vinculada ao pacote 3 (Pacote Vinícola)
-insert into tbPassagem (IdViagem, IdCliente, IdPacote, Assento, Valor, Situacao) VALUES
+insert into tbPassagem (IdViagem, IdCliente,Assento, Valor, Situacao) VALUES
 (5, 2, 3, '05C', 1200.00, 'Reservada');
 insert into tbPassagem (IdViagem, IdCliente, Assento, Valor, Situacao) VALUES
 (2, null, '08D', 850.00, 'Disponível');
@@ -138,24 +137,6 @@ select * from tbViagem;
 select * from tbLogs;
 
 -- criando procedures
-
--- procedure passagemPacote
-delimiter $$
-create procedure passagemPacote(
-	in vIdPacote int,
-    in vIdPassagem int
-)
-begin
-		insert into tbPassagem(IdPacote) values(vIdPacote)
-        insert into tbPacote(IdPassagem) values (vIdPassagem),
-        update tbPassagem 
-        set IdPacote = vIdPacote
-        where IdPassagem = vIdPassagem;
-        
-end $$
-delimiter ;
-
-
 delimiter $$
 create procedure situacaoPassagem(
 in Id int 
