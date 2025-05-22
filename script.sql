@@ -1,4 +1,4 @@
-drop database dbAnu;
+-- drop database dbAnu;
 create database dbAnu;
 use dbAnu;
 show tables;
@@ -27,7 +27,7 @@ create table tbFuncionario (
 create table tbProduto (
   IdProduto int auto_increment primary key, 
   NomeProduto varchar(50) not null,
-  Valor decimal(10,2) not null,
+  Valor decimal(8,2) not null,
   Descricao Text not null,
   Quantidade int not null
 );
@@ -38,7 +38,7 @@ create table tbPacote (
   IdPassagem int not null,
   NomePacote varchar(50) not null,
   Descricao text not null,
-  Valor decimal(10,2) not null
+  Valor decimal(8,2) not null
 );
 
 create table tbViagem (
@@ -54,16 +54,16 @@ create table tbViagem (
 create table tbPassagem (
   IdPassagem int auto_increment primary key,
   Assento char(5) not null,
-  Valor decimal(10,2) not null,
+  Valor decimal(8,2) not null,
   DataCompra datetime,
   IdViagem int not null,
   IdCliente int,
   Situacao varchar(50)
 );
-drop table tbLogs;
+
 create table tbLogs(
 	Usuario varchar(50) not null,
-    DataLog datetime not null,
+    DataLog timestamp default current_timestamp not null,
     Acao Text not null
 );
 -- criando foreign keys via alter table
@@ -75,53 +75,52 @@ alter table tbPacote
 add constraint FkPassagemPacote foreign key(IdPassagem) references tbPassagem(IdPassagem),
 add constraint FkProdutoPacote foreign key(IdProduto) references tbProduto(IdProduto);
 
-alter table tbProduto
-add constraint FkPacoteProduto foreign key(IdPacote) references tbPacote(IdPacote);
-
 -- inserts
 -- insert cliente
-insert into tbCliente(Nome, Sexo, Email, Telefone, Cpf) values(
-'João Silva', 'M', 'joao@email.com', '11999998888', '12345678900'),
-('Maria Souza', 'F', 'maria@email.com', 11988887777, 98765432100),
-('Pedro Santos', 'M', 'pedro@email.com', 11977776666, 45678912300);
+insert into tbCliente (Nome, Sexo, Email, Telefone, Cpf) values
+('Ana Silva', 'F', 'ana@gmail.com', '11987654321', '12345678901'),
+('Carlos Souza', 'M', 'carlos@hotmail.com', '21987654321', '23456789012'),
+('Beatriz Costa', 'F', 'bea@yahoo.com', '11911223344', '34567890123'),
+('Diego Ramos', 'M', 'diego@outlook.com', '11955667788', '45678901234');
+  
 
 -- insert funcionario
-insert into tbFuncionario(Nome, Sexo, Email, Telefone, Cpf, Cargo, Senha) values(
-'Ana Pereira', 'F', 'ana.pereira@email.com', 11955556666, 11223344556, 'Administrador', 'Ana123'),
-('Carlos Silva', 'M', 'carlos.silva@email.com', 11944445555, 22334455667, 'Gerente', "Car123"),
-('Juliana Costa', 'F', 'juliana.costa@email.com', 11933334444, 33445566778, 'Vendedor', 'Ju123');
+INSERT INTO tbFuncionario (Nome, Sexo, Email, Telefone, Cargo, Cpf, Senha) VALUES
+('João Pedro', 'M', 'joao@empresa.com', '31987654321', 'Atendente', '56789012345', 'abc12345'),
+('Mariana Lima', 'F', 'mariana@empresa.com', '41987654321', 'Gerente', '67890123456', 'def67890'),
+('Rafael Torres', 'M', 'rafa@empresa.com', '51987654321', 'Consultor', '78901234567', 'ghi45678'),
+('Larissa Mendes', 'F', 'larissa@empresa.com', '61987654321', 'Vendedora', '89012345678', 'jkl98765');
+
+-- insert produto
+insert into tbProduto (NomeProduto, Valor, Descricao, Quantidade) values
+('Passeio de Lancha', 299.99, 'Passeio de lancha de 2 horas', 10),
+('Trilha na Mata', 150.00, 'Trilha com guia turístico', 25),
+('Mergulho com Cilindro', 400.00, 'Experiência de mergulho com instrutor', 5),
+('Tour Gastronômico', 180.00, 'Visita a restaurantes típicos com guia', 15);
 
 -- insert viagem
-insert into tbViagem (DataRetorno, Descricao, Origem, Destino, TipoTransporte, DataPartida)
-values 
-('2025-05-20 14:00:00', 'Viagem para o Rio de Janeiro com hospedagem e city tour', 'São Paulo', 'Rio de Janeiro', 'Ônibus', '2025-05-18 08:00:00'),
-('2025-06-10 18:00:00', 'Passagem aérea para Buenos Aires com pacote completo', 'São Paulo', 'Buenos Aires', 'Avião', '2025-06-08 12:00:00'),
-('2025-07-01 16:00:00', 'Excursão para Foz do Iguaçu com guias especializados', 'Curitiba', 'Foz do Iguaçu', 'Ônibus', '2025-06-29 07:00:00'),
-('2025-08-15 20:00:00', 'Pacote família para Bahia', 'Rio de Janeiro', 'Salvador', 'Avião', '2025-08-10 09:00:00'),
-('2025-09-05 17:00:00', 'Tour wine em Mendoza', 'Porto Alegre', 'Mendoza', 'Avião', '2025-09-01 11:00:00');
+insert into tbViagem (DataRetorno, Descricao, Origem, Destino, TipoTransporte, DataPartida) values
+('2025-07-20 18:00:00', 'Viagem ao litoral com paradas em praias.', 'São Paulo', 'Ubatuba', 'Ônibus', '2025-07-18 08:00:00'),
+('2025-08-10 22:00:00', 'Pacote aéreo para o nordeste brasileiro.', 'Rio de Janeiro', 'Salvador', 'Avião', '2025-08-05 10:30:00'),
+('2025-09-15 21:00:00', 'Excursão para trilhas ecológicas.', 'Belo Horizonte', 'Chapada dos Veadeiros', 'Ônibus', '2025-09-10 06:00:00'),
+('2025-12-01 20:00:00', 'Viagem de fim de ano com festas e passeios.', 'Curitiba', 'Florianópolis', 'Ônibus', '2025-11-28 09:00:00');
+
 
 -- insert passagem
-insert into tbPassagem (IdViagem, IdCliente, Assento, Valor, Situacao, DataCompra) values
-(1, 2, '14B', 850.00, 'Vendida', '2025-04-15 10:30:00'),
-(2, null, '22C', 1200.00, 'Disponível', null),
-(3, 3, '08A', 650.00, 'Vendida', '2025-03-20 14:15:00'),
-(4, null, '15D', 950.00, 'Disponível', null),
-(5, null, '09F', 1100.00, 'Disponível', null);
+insert into tbPassagem (Assento, Valor, DataCompra, IdViagem, IdCliente, Situacao) values
+('12A', 180.00, '2025-06-01 14:00:00', 1, 1, 'Confirmada'),
+('7C', 450.00, '2025-06-02 10:00:00', 2, 2, 'Confirmada'),
+('18B', 300.00, '2025-06-05 11:00:00', 3, 3, 'Pendente'),
+('5D', 250.00, '2025-06-07 16:00:00', 4, 4, 'Confirmada');
+
 
 -- insert pacote
 insert into tbPacote (IdProduto, IdPassagem, NomePacote, Descricao, Valor) values
-(1, 1, 'Pacote Rio Econômico', 'Inclui passagem de ônibus e 3 noites de hospedagem', 1250.00),
-(2, 2, 'Pacote Buenos Aires Premium', 'Passagem aérea + city tour + transfer', 1550.00),
-(3, 3, 'Pacote Foz Aventura', 'Passagem de ônibus + transfer + passeio de barco', 950.00),
-(4, 4, 'Pacote Família Bahia', 'Passagem aérea + transfer + seguro viagem', 1150.00),
-(5, 5, 'Pacote Mendoza Vinho', 'Passagem aérea + seguro + tour vinícola', 1350.00);
--- insert produto
-insert into tbProduto (NomeProduto, Valor, Descricao, Quantidade) values
-('Hospedagem 3 estrelas', 450.00, 'Diária em hotel 3 estrelas com café da manhã', 10),
-('City Tour Completo', 150.00, 'Passeio guiado pelas principais atrações', 20),
-('Transfer Aeroporto', 80.00, 'Transporte privativo do aeroporto ao hotel', 15),
-('Passeio de Barco', 200.00, 'Passeio de barco com almoço incluso', 8),
-('Seguro Viagem', 120.00, 'Cobertura básica para viagens nacionais', 30);
+(1, 1, 'Pacote Litoral Plus', 'Inclui passeio de lancha e transporte ida e volta.', 479.99),
+(2, 2, 'Pacote Trilha Nordeste', 'Inclui trilha e transporte aéreo.', 599.99),
+(3, 3, 'Pacote Mergulho Top', 'Mergulho com cilindro + hospedagem.', 699.99),
+(4, 4, 'Pacote Gourmet Sul', 'Tour gastronômico e transporte.', 420.00);
+
 -- selects
 select * from tbPassagem;
 select * from tbProduto;
@@ -142,6 +141,25 @@ in Id int
     end $$
     delimiter ;
 call situacaoPassagem(0);
+
+drop procedure DeletarClientePassagem;
+delimiter $$
+create procedure DeletarClientePassagem(
+in p_IdCliente int
+)
+	begin
+		update tbPassagem
+        set IdCliente = null
+        where IdCliente = p_IdCliente;
+        
+        delete from tbCliente
+        where IdCliente = p_IdCliente;
+	end $$
+    delimiter ;
+call DeletarClientePassagem(1);
+select * from tbPassagem;
+select * from tbLogs;
+
 /*
 delimiter $$
 create procedure ComprarPacote(
@@ -206,6 +224,7 @@ update tbCliente
 set Nome = 'João Silva Oliveira', 
     Email = 'joao.novo@email.com'
 where IdCliente = 1;  -- Alterando os dados do cliente com ID 1
+select * from tbLogs;
 
 -- trigger exclusão
 delimiter $$
@@ -216,4 +235,3 @@ before delete on tbCliente
         insert into tbLogs(Usuario, DataLog, Acao) values (current_user(), now(),  concat('Cliente excluído: ID ', old.IdCliente, ' - Nome: ', old.Nome));
         end $$
 delimiter ;
-delete from tbCliente where IdCliente = 1;
