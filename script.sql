@@ -142,7 +142,6 @@ in Id int
     delimiter ;
 call situacaoPassagem(0);
 
-drop procedure DeletarClientePassagem;
 delimiter $$
 create procedure DeletarClientePassagem(
 in p_IdCliente int
@@ -160,6 +159,22 @@ call DeletarClientePassagem(1);
 select * from tbPassagem;
 select * from tbLogs;
 
+delimiter $$
+create procedure DeletarPassagemPacote(
+in p_IdPassagem int,
+in p_IdPacote int
+)
+	begin
+		delete from tbPacote
+        where IdPacote = p_IdPacote;
+        
+        delete from tbPassagem
+        where IdPassagem = p_IdPassagem;
+	end $$
+    delimiter ;
+    call DeletarPassagemPacote(1, 1);
+    select * from tbPacote;
+    select * from tbPassagem;
 /*
 delimiter $$
 create procedure ComprarPacote(
@@ -235,3 +250,6 @@ before delete on tbCliente
         insert into tbLogs(Usuario, DataLog, Acao) values (current_user(), now(),  concat('Cliente excluído: ID ', old.IdCliente, ' - Nome: ', old.Nome));
         end $$
 delimiter ;
+
+-- testes
+delete from tbPassagem where IdPassagem = 1;
