@@ -175,6 +175,23 @@ in p_IdPacote int
     call DeletarPassagemPacote(1, 1);
     select * from tbPacote;
     select * from tbPassagem;
+    
+    delimiter $$
+create procedure DeletarProdutoPacote(
+in p_IdProduto int,
+in p_IdPacote int
+)
+	begin
+		delete from tbPacote
+        where IdPacote = p_IdPacote;
+        
+        delete from tbProduto
+        where IdProduto = p_IdProduto;
+	end $$
+    delimiter ;
+    call DeletarProdutoPacote(2,2);
+    select * from tbPacote;
+    select * from tbProduto;
 /*
 delimiter $$
 create procedure ComprarPacote(
@@ -251,5 +268,3 @@ before delete on tbCliente
         end $$
 delimiter ;
 
--- testes
-delete from tbPassagem where IdPassagem = 1;
