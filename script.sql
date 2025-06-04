@@ -60,12 +60,27 @@ create table tbPassagem (
   IdCliente int,
   Situacao varchar(50)
 );
+-- alterando o tipo da coluna DataCompra
+alter table tbPassagem modify column DataCompra timestamp default current_timestamp not null;
 
 create table tbLogs(
 	Usuario varchar(50) not null,
     DataLog timestamp default current_timestamp not null,
     Acao Text not null
 );
+create table tbVendaDetalhe(
+	IdVenda int not null
+);
+
+create table tbVenda(
+	IdVenda int primary key auto_increment,
+    DataVenda timestamp default current_timestamp not null,
+	IdPassagem int not null,
+    Valor decimal(8,2) not null,
+    IdCliente int not null,
+    IdFuncionario int not null
+);
+
 -- criando foreign keys via alter table
 alter table tbPassagem
 add constraint FkViagem foreign key (IdViagem) references tbViagem(IdViagem),
@@ -74,6 +89,14 @@ add constraint FkPassagemCliente foreign key (IdCliente) references tbCliente(Id
 alter table tbPacote 
 add constraint FkPassagemPacote foreign key(IdPassagem) references tbPassagem(IdPassagem),
 add constraint FkProdutoPacote foreign key(IdProduto) references tbProduto(IdProduto);
+
+alter table tbVenda
+add constraint FkIdPassagem foreign key(IdPassagem) references tbPassagem(IdPassagem),
+add constraint FkIdCliente foreign key (IdCliente) references tbCliente(IdCliente),
+add constraint FkIdFuncionario foreign key(IdFuncionario) references tbFuncionario(IdFuncionario);
+
+alter table tbVendaDetalhe
+add constraint FkIdVenda foreign key(IdVenda) references tbVenda(IdVenda);
 
 -- inserts
 -- insert cliente
@@ -192,7 +215,9 @@ in p_IdPacote int
     call DeletarProdutoPacote(2,2);
     select * from tbPacote;
     select * from tbProduto;
-/*
+ 
+ -- operação de compra
+ -- compra de pacote
 delimiter $$
 create procedure ComprarPacote(
 in NomePacote varchar(50), 
@@ -216,13 +241,45 @@ begin
     values (IdCliente, vIdFuncionario, CURDATE(), vValorPacote);
 	
 	-- pegando o id da venda recém-criada
-    set vIdVenda = 1;
+    set vIdVenda = last_insert_id();
     -- inserindo na nota fiscal
-       insert into tbNotaFiscal (IdVenda)
+       insert into tbVendaDetalhe (IdVenda)
     values (vIdVenda);
 end  $$
 delimiter ;
-*/
+CALL ComprarPacote('Pacote Gourmet Sul', 4);
+
+-- compra de passagem
+delimiter $$
+create procedure ComprarPassagem(
+in Assento char(5), 
+in IdCliente int 
+)
+begin
+    declare vIdPassagem int;
+	declare vValorPassagem decimal(8,2);
+    declare vIdVenda int;
+    declare vIdFuncionario int default 1;
+    
+    select IdPassagem, Valor
+    into vIdPassagem, vValorPassagem
+    from tbPassagem
+    where tbPassagem.Assento = Assento
+    limit 1;
+    
+    -- criando a venda
+  insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor)
+    values (IdCliente, vIdFuncionario, CURDATE(), vValorPassagem);
+	
+	-- pegando o id da venda recém-criada
+    set vIdVenda = last_insert_id();
+    -- inserindo na nota fiscal
+       insert into tbVendaDetalhe (IdVenda)
+    values (vIdVenda);
+end  $$
+delimiter ;
+CALL ComprarPassagem('7C', 2);
+
 
 select p.IdPassagem, p.Assento, p.Valor as ValorPassagem, p.Situacao,
        pac.NomePacote, pac.Valor as ValorPacote
