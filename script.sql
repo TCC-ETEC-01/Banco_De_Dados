@@ -3,7 +3,6 @@ create database dbAnu;
 use dbAnu;
 show tables;
 
--- tabela cliente
 create table tbCliente (
   Nome varchar(50) not null,
   Sexo enum('M', 'F') not null,
@@ -153,7 +152,7 @@ select * from tbFuncionario;
 select * from tbViagem;
 select * from tbLogs;
 
--- criando procedures
+-- procedures
 delimiter $$
 create procedure situacaoPassagem(
 in Id int 
@@ -170,20 +169,17 @@ create procedure DeletarClientePassagem(
 	in p_IdCliente int
 )
 begin
-	-- Desvincula o cliente das passagens
 	update tbPassagem
 	set IdCliente = null
 	where IdCliente = p_IdCliente;
-
-	-- Log da exclusão do cliente
+    
 	insert into tbLogs (Usuario, DataLog, Acao)
 	values (
 		current_user(), 
 		now(), 
-		concat('Cliente excluído via procedure: ID ', p_IdCliente)
+		concat('Cliente excluído via: ID ', p_IdCliente)
 	);
 
-	-- Exclui o cliente
 	delete from tbCliente
 	where IdCliente = p_IdCliente;
 end $$
@@ -196,44 +192,37 @@ create procedure DeletarPassagemPacote(
 	in p_IdPacote int
 )
 begin
-	-- Log da exclusão
 	insert into tbLogs (Usuario, DataLog, Acao)
 	values (
 		current_user(), 
 		now(), 
-		concat('Exclusão via procedure: Passagem ID ', p_IdPassagem, ', Pacote ID ', p_IdPacote)
+		concat('Exclusão de passagem: Passagem ID ', p_IdPassagem, ', Pacote ID ', p_IdPacote)
 	);
 
-	-- Exclui o pacote
 	delete from tbPacote
 	where IdPacote = p_IdPacote;
 
-	-- Exclui a passagem
 	delete from tbPassagem
 	where IdPassagem = p_IdPassagem;
 end $$
 delimiter ;
 
-drop procedure if exists DeletarProdutoPacote;
 delimiter $$
 create procedure DeletarProdutoPacote(
 	in p_IdProduto int,
 	in p_IdPacote int
 )
 begin
-	-- Log da exclusão
 	insert into tbLogs (Usuario, DataLog, Acao)
 	values (
 		current_user(), 
 		now(), 
-		concat('Exclusão via procedure: Produto ID ', p_IdProduto, ', Pacote ID ', p_IdPacote)
+		concat('Exclusão de produto: Produto ID ', p_IdProduto, ', Pacote ID ', p_IdPacote)
 	);
 
-	-- Exclui o pacote
 	delete from tbPacote
 	where IdPacote = p_IdPacote;
 
-	-- Exclui o produto
 	delete from tbProduto
 	where IdProduto = p_IdProduto;
 end $$
@@ -253,21 +242,17 @@ begin
     declare vIdFuncionario int default 1;
     declare vIdPacote int;
     declare vIdPassagem int;
-    
-    -- buscando o id e o valor do pacote
+
     select IdPacote, Valor, IdPassagem
     into vIdPacote, vValorPacote, vIdPassagem
     from tbPacote
     where tbPacote.NomePacote = NomePacote
     limit 1;
     
-    -- criando a venda
   insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor, IdPassagem)
     values (IdCliente, vIdFuncionario, CURDATE(), vValorPacote, vIdPassagem);
 	
-	-- pegando o id da venda recém-criada
     set vIdVenda = last_insert_id();
-    -- inserindo na nota fiscal
        insert into tbVendaDetalhe (IdVenda)
     values (vIdVenda);
 end  $$
@@ -286,36 +271,33 @@ begin
     declare vIdVenda int;
     declare vIdFuncionario int default 1;
 
-    -- Busca a passagem pelo assento
     select IdPassagem, Valor
     into vIdPassagem, vValorPassagem
     from tbPassagem
     where Assento = Assento
    limit 1;
     
-    -- Cria a venda
     insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor, IdPassagem)
     values (IdCliente, vIdFuncionario, CURDATE(), vValorPassagem, vIdPassagem);
     
-    -- Pega o ID da venda recém-criada
     set vIdVenda = last_insert_id();
 
-    -- Insere na nota fiscal
     insert into tbVendaDetalhe (IdVenda)
     values (vIdVenda);
 
-    -- Atualiza a situação da passagem para "Confirmada"
     update tbPassagem
     set Situacao = 'Confirmada', IdCliente = IdCliente
     where IdPassagem = vIdPassagem;
 end $$
 delimiter ;
 call ComprarPassagem('12A', 2);
-    select
-        c.IdCliente, c.Nome as Nome, c.Email,
-        p.IdPassagem, p.Assento, p.Valor, p.Situacao
-    from tbCliente c
-    inner join tbPassagem p on c.IdCliente = p.IdCliente;
+
+-- inner joins
+select c.IdCliente, c.Nome as Nome, c.Email,
+p.IdPassagem, p.Assento, p.Valor, p.Situacao
+from tbCliente c
+inner join tbPassagem p on c.IdCliente = p.IdCliente;
+    
 select p.IdPassagem, p.Assento, p.Valor as ValorPassagem, p.Situacao,
        pac.NomePacote, pac.Valor as ValorPacote
 from tbPassagem p
