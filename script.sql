@@ -108,7 +108,7 @@ insert into tbCliente (Nome, Sexo, Email, Telefone, Cpf) values
   
 
 -- insert funcionario
-INSERT INTO tbFuncionario (Nome, Sexo, Email, Telefone, Cargo, Cpf, Senha) VALUES
+insert into tbFuncionario (Nome, Sexo, Email, Telefone, Cargo, Cpf, Senha) values
 ('João Pedro', 'M', 'joao@empresa.com', '31987654321', 'Atendente', '56789012345', 'abc12345'),
 ('Mariana Lima', 'F', 'mariana@empresa.com', '41987654321', 'Gerente', '67890123456', 'def67890'),
 ('Rafael Torres', 'M', 'rafa@empresa.com', '51987654321', 'Consultor', '78901234567', 'ghi45678'),
@@ -221,24 +221,25 @@ in p_IdPacote int
 delimiter $$
 create procedure ComprarPacote(
 in NomePacote varchar(50), 
-in IdCliente int 
+in IdCliente int
 )
 begin
-    declare vIdPacote int;
 	declare vValorPacote decimal(10,2);
     declare vIdVenda int;
     declare vIdFuncionario int default 1;
+    declare vIdPacote int;
+    declare vIdPassagem int;
     
     -- buscando o id e o valor do pacote
-    select IdPacote, Valor
-    into vIdPacote, vValorPacote
+    select IdPacote, Valor, IdPassagem
+    into vIdPacote, vValorPacote, vIdPassagem
     from tbPacote
     where tbPacote.NomePacote = NomePacote
     limit 1;
     
     -- criando a venda
-  insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor)
-    values (IdCliente, vIdFuncionario, CURDATE(), vValorPacote);
+  insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor, IdPassagem)
+    values (IdCliente, vIdFuncionario, CURDATE(), vValorPacote, vIdPassagem);
 	
 	-- pegando o id da venda recém-criada
     set vIdVenda = last_insert_id();
@@ -250,36 +251,49 @@ delimiter ;
 CALL ComprarPacote('Pacote Gourmet Sul', 4);
 
 -- compra de passagem
-delimiter $$
+DELIMITER $$
 create procedure ComprarPassagem(
-in Assento char(5), 
-in IdCliente int 
+    in Assento char(5), 
+    in IdCliente int 
 )
 begin
     declare vIdPassagem int;
-	declare vValorPassagem decimal(8,2);
+    declare vValorPassagem decimal(8,2);
     declare vIdVenda int;
     declare vIdFuncionario int default 1;
-    
+
+    -- Busca a passagem pelo assento
     select IdPassagem, Valor
     into vIdPassagem, vValorPassagem
     from tbPassagem
-    where tbPassagem.Assento = Assento
-    limit 1;
+    where Assento = Assento
+   limit 1;
     
-    -- criando a venda
-  insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor)
-    values (IdCliente, vIdFuncionario, CURDATE(), vValorPassagem);
-	
-	-- pegando o id da venda recém-criada
+    -- Cria a venda
+    insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor, IdPassagem)
+    values (IdCliente, vIdFuncionario, CURDATE(), vValorPassagem, vIdPassagem);
+    
+    -- Pega o ID da venda recém-criada
     set vIdVenda = last_insert_id();
-    -- inserindo na nota fiscal
-       insert into tbVendaDetalhe (IdVenda)
-    values (vIdVenda);
-end  $$
-delimiter ;
-CALL ComprarPassagem('7C', 2);
 
+    -- Insere na nota fiscal
+    insert into tbVendaDetalhe (IdVenda)
+    values (vIdVenda);
+
+    -- Atualiza a situação da passagem para "Confirmada"
+    update tbPassagem
+    set Situacao = 'Confirmada', IdCliente = IdCliente
+    where IdPassagem = vIdPassagem;
+
+    -- Exibe os dados do cliente e passagem
+    select
+        c.IdCliente, c.Nome as Nome, c.Email,
+        p.IdPassagem, p.Assento, p.Valor, p.Situacao
+    from tbCliente c
+    inner join tbPassagem p on c.IdCliente = p.IdCliente;
+end $$
+delimiter ;
+call ComprarPassagem('7C', 2);
 
 select p.IdPassagem, p.Assento, p.Valor as ValorPassagem, p.Situacao,
        pac.NomePacote, pac.Valor as ValorPacote
@@ -290,13 +304,7 @@ select pac.IdPacote, pac.NomePacote, prod.NomeProduto, prod.Valor as ValorProdut
 from tbPacote pac
 inner join tbProduto prod on pac.IdProduto = prod.IdProduto;
 
-/* c.nome as Nome, p.nomePacote as NomePacote
-from tbCliente c
-inner join tbVenda v on c.IdCliente = v.IdCliente
-inner join tbFuncionario f on f.IdFuncionario = f.IdFuncionario
-inner join tbNotaFiscal NF on v.IdVenda = NF.IdVenda
-inner join tbPacote p on NF.IdPacote = p.IdPacote;
-*/
+
 
 -- triggers
 delimiter $$
