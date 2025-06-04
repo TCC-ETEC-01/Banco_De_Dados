@@ -167,54 +167,78 @@ call situacaoPassagem(0);
 
 delimiter $$
 create procedure DeletarClientePassagem(
-in p_IdCliente int
+	in p_IdCliente int
 )
-	begin
-		update tbPassagem
-        set IdCliente = null
-        where IdCliente = p_IdCliente;
-        
-        delete from tbCliente
-        where IdCliente = p_IdCliente;
-	end $$
-    delimiter ;
-call DeletarClientePassagem(1);
-select * from tbPassagem;
-select * from tbLogs;
+begin
+	-- Desvincula o cliente das passagens
+	update tbPassagem
+	set IdCliente = null
+	where IdCliente = p_IdCliente;
 
+	-- Log da exclusão do cliente
+	insert into tbLogs (Usuario, DataLog, Acao)
+	values (
+		current_user(), 
+		now(), 
+		concat('Cliente excluído via procedure: ID ', p_IdCliente)
+	);
+
+	-- Exclui o cliente
+	delete from tbCliente
+	where IdCliente = p_IdCliente;
+end $$
+delimiter ;
+	call DeletarClientePassagem(1);
+    
 delimiter $$
 create procedure DeletarPassagemPacote(
-in p_IdPassagem int,
-in p_IdPacote int
+	in p_IdPassagem int,
+	in p_IdPacote int
 )
-	begin
-		delete from tbPacote
-        where IdPacote = p_IdPacote;
-        
-        delete from tbPassagem
-        where IdPassagem = p_IdPassagem;
-	end $$
-    delimiter ;
-    call DeletarPassagemPacote(1, 1);
-    select * from tbPacote;
-    select * from tbPassagem;
-    
-    delimiter $$
+begin
+	-- Log da exclusão
+	insert into tbLogs (Usuario, DataLog, Acao)
+	values (
+		current_user(), 
+		now(), 
+		concat('Exclusão via procedure: Passagem ID ', p_IdPassagem, ', Pacote ID ', p_IdPacote)
+	);
+
+	-- Exclui o pacote
+	delete from tbPacote
+	where IdPacote = p_IdPacote;
+
+	-- Exclui a passagem
+	delete from tbPassagem
+	where IdPassagem = p_IdPassagem;
+end $$
+delimiter ;
+
+drop procedure if exists DeletarProdutoPacote;
+delimiter $$
 create procedure DeletarProdutoPacote(
-in p_IdProduto int,
-in p_IdPacote int
+	in p_IdProduto int,
+	in p_IdPacote int
 )
-	begin
-		delete from tbPacote
-        where IdPacote = p_IdPacote;
-        
-        delete from tbProduto
-        where IdProduto = p_IdProduto;
-	end $$
-    delimiter ;
-    call DeletarProdutoPacote(2,2);
-    select * from tbPacote;
-    select * from tbProduto;
+begin
+	-- Log da exclusão
+	insert into tbLogs (Usuario, DataLog, Acao)
+	values (
+		current_user(), 
+		now(), 
+		concat('Exclusão via procedure: Produto ID ', p_IdProduto, ', Pacote ID ', p_IdPacote)
+	);
+
+	-- Exclui o pacote
+	delete from tbPacote
+	where IdPacote = p_IdPacote;
+
+	-- Exclui o produto
+	delete from tbProduto
+	where IdProduto = p_IdProduto;
+end $$
+delimiter ;
+
  
  -- operação de compra
  -- compra de pacote
@@ -300,34 +324,3 @@ left join tbPacote pac on p.IdPassagem = pac.IdPassagem;
 select pac.IdPacote, pac.NomePacote, prod.NomeProduto, prod.Valor as ValorProduto
 from tbPacote pac
 inner join tbProduto prod on pac.IdProduto = prod.IdProduto;
-
-
-
--- triggers
-delimiter $$
-create trigger updateCliente
-after update on tbCliente
-for each row
-begin
-	  insert into tbLogs (Usuario, DataLog, Acao)
-    values (current_user(), now(), concat('Cliente atualizado: ID ', old.IdCliente, 
-           ' | Nome antigo: ', old.Nome, ' → Novo nome: ', new.Nome));
-end $$
-delimiter ;
-update tbCliente 
-set Nome = 'João Silva Oliveira', 
-    Email = 'joao.novo@email.com'
-where IdCliente = 1; 
-select * from tbLogs;
-
--- trigger exclusão
-delimiter $$
-create trigger deleteCliente
-before delete on tbCliente
-	for each row
-		begin
-        insert into tbLogs(Usuario, DataLog, Acao) values (current_user(), now(),  concat('Cliente excluído: ID ', old.IdCliente, ' - Nome: ', old.Nome));
-        end $$
-delimiter ;
-delete from tbCliente where IdCliente = 1;
-select * from tbLogs;
