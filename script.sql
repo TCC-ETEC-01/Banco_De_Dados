@@ -106,6 +106,7 @@ insert into tbCliente (Nome, Sexo, Email, Telefone, Cpf) values
 ('Beatriz Costa', 'F', 'bea@yahoo.com', '11911223344', '34567890123'),
 ('Diego Ramos', 'M', 'diego@outlook.com', '11955667788', '45678901234');
   
+  
 
 -- insert funcionario
 insert into tbFuncionario (Nome, Sexo, Email, Telefone, Cargo, Cpf, Senha) values
@@ -130,12 +131,11 @@ insert into tbViagem (DataRetorno, Descricao, Origem, Destino, TipoTransporte, D
 
 
 -- insert passagem
-insert into tbPassagem (Assento, Valor, DataCompra, IdViagem, IdCliente, Situacao) values
-('12A', 180.00, '2025-06-01 14:00:00', 1, 1, 'Confirmada'),
-('7C', 450.00, '2025-06-02 10:00:00', 2, 2, 'Confirmada'),
-('18B', 300.00, '2025-06-05 11:00:00', 3, 3, 'Pendente'),
-('5D', 250.00, '2025-06-07 16:00:00', 4, 4, 'Confirmada');
-
+insert into tbPassagem (Assento, Valor, IdViagem,Situacao) values
+('12A', 180.00, 1, 'Disponivel'),
+('7C', 450.00, 2, 'Disponivel'),
+('18B', 300.00,3, 'Disponivel'),
+('5D', 250.00, 4, 'Disponivel');
 
 -- insert pacote
 insert into tbPacote (IdProduto, IdPassagem, NomePacote, Descricao, Valor) values
@@ -248,7 +248,7 @@ begin
     values (vIdVenda);
 end  $$
 delimiter ;
-CALL ComprarPacote('Pacote Gourmet Sul', 4);
+call ComprarPacote('Pacote Gourmet Sul', 4);
 
 -- compra de passagem
 DELIMITER $$
@@ -284,17 +284,14 @@ begin
     update tbPassagem
     set Situacao = 'Confirmada', IdCliente = IdCliente
     where IdPassagem = vIdPassagem;
-
-    -- Exibe os dados do cliente e passagem
+end $$
+delimiter ;
+call ComprarPassagem('12A', 2);
     select
         c.IdCliente, c.Nome as Nome, c.Email,
         p.IdPassagem, p.Assento, p.Valor, p.Situacao
     from tbCliente c
     inner join tbPassagem p on c.IdCliente = p.IdCliente;
-end $$
-delimiter ;
-call ComprarPassagem('7C', 2);
-
 select p.IdPassagem, p.Assento, p.Valor as ValorPassagem, p.Situacao,
        pac.NomePacote, pac.Valor as ValorPacote
 from tbPassagem p
@@ -320,7 +317,7 @@ delimiter ;
 update tbCliente 
 set Nome = 'João Silva Oliveira', 
     Email = 'joao.novo@email.com'
-where IdCliente = 1;  -- Alterando os dados do cliente com ID 1
+where IdCliente = 1; 
 select * from tbLogs;
 
 -- trigger exclusão
@@ -332,4 +329,5 @@ before delete on tbCliente
         insert into tbLogs(Usuario, DataLog, Acao) values (current_user(), now(),  concat('Cliente excluído: ID ', old.IdCliente, ' - Nome: ', old.Nome));
         end $$
 delimiter ;
-
+delete from tbCliente where IdCliente = 1;
+select * from tbLogs;
