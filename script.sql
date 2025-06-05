@@ -1,11 +1,11 @@
 -- drop database dbAnu;
-create database dbAnu;
-use dbAnu;
+-- create database dbAnu;
+-- use dbAnu;
 show tables;
 
 create table tbCliente (
   Nome varchar(50) not null,
-  Sexo enum('M', 'F') not null,
+  Sexo char(12),
   Email varchar(50) not null,
   Telefone char(11) not null,
   Cpf char(11) not null,
@@ -68,7 +68,8 @@ create table tbLogs(
     Acao Text not null
 );
 create table tbVendaDetalhe(
-	IdVenda int not null
+	IdVenda int not null,
+    IdPassagem int not null
 );
 
 create table tbVenda(
@@ -95,7 +96,8 @@ add constraint FkIdCliente foreign key (IdCliente) references tbCliente(IdClient
 add constraint FkIdFuncionario foreign key(IdFuncionario) references tbFuncionario(IdFuncionario);
 
 alter table tbVendaDetalhe
-add constraint FkIdVenda foreign key(IdVenda) references tbVenda(IdVenda);
+add constraint FkIdVenda foreign key(IdVenda) references tbVenda(IdVenda),
+add constraint FkIdPassagemVenda foreign key (IdPassagem) references tbPassagem(IdPassagem);
 
 -- inserts
 -- insert cliente
@@ -106,7 +108,6 @@ insert into tbCliente (Nome, Sexo, Email, Telefone, Cpf) values
 ('Diego Ramos', 'M', 'diego@outlook.com', '11955667788', '45678901234');
   
   
-
 -- insert funcionario
 insert into tbFuncionario (Nome, Sexo, Email, Telefone, Cargo, Cpf, Senha) values
 ('João Pedro', 'M', 'joao@empresa.com', '31987654321', 'Atendente', '56789012345', 'abc12345'),
@@ -121,20 +122,10 @@ insert into tbProduto (NomeProduto, Valor, Descricao, Quantidade) values
 ('Mergulho com Cilindro', 400.00, 'Experiência de mergulho com instrutor', 5),
 ('Tour Gastronômico', 180.00, 'Visita a restaurantes típicos com guia', 15);
 
--- insert viagem
-insert into tbViagem (DataRetorno, Descricao, Origem, Destino, TipoTransporte, DataPartida) values
-  (str_to_date('20/07/2025 18:00:00', '%d/%m/%Y %H:%i:%s'), 'Viagem ao litoral com paradas em praias.', 'São Paulo', 'Ubatuba', 'Ônibus', str_to_date('18/07/2025 08:00:00', '%d/%m/%Y %H:%i:%s')),
-  (str_to_date('10/08/2025 22:00:00', '%d/%m/%Y %H:%i:%s'), 'Pacote aéreo para o nordeste brasileiro.', 'Rio de Janeiro', 'Salvador', 'Avião', str_to_date('05/08/2025 10:30:00', '%d/%m/%Y %H:%i:%s')),
-  (str_to_date('15/09/2025 21:00:00', '%d/%m/%Y %H:%i:%s'), 'Excursão para trilhas ecológicas.', 'Belo Horizonte', 'Chapada dos Veadeiros', 'Ônibus', str_to_date('10/09/2025 06:00:00', '%d/%m/%Y %H:%i:%s')),
-  (str_to_date('01/12/2025 20:00:00', '%d/%m/%Y %H:%i:%s'), 'Viagem de fim de ano com festas e passeios.', 'Curitiba', 'Florianópolis', 'Ônibus', str_to_date('28/11/2025 09:00:00', '%d/%m/%Y %H:%i:%s'));
-
-
 -- insert passagem
+/*
 insert into tbPassagem (Assento, Valor, IdViagem,Situacao) values
-('12A', 180.00, 1, 'Disponivel'),
-('7C', 450.00, 2, 'Disponivel'),
-('18B', 300.00,3, 'Disponivel'),
-('5D', 250.00, 4, 'Disponivel');
+
 
 -- insert pacote
 insert into tbPacote (IdProduto, IdPassagem, NomePacote, Descricao, Valor) values
@@ -142,6 +133,7 @@ insert into tbPacote (IdProduto, IdPassagem, NomePacote, Descricao, Valor) value
 (2, 2, 'Pacote Trilha Nordeste', 'Inclui trilha e transporte aéreo.', 599.99),
 (3, 3, 'Pacote Mergulho Top', 'Mergulho com cilindro + hospedagem.', 699.99),
 (4, 4, 'Pacote Gourmet Sul', 'Tour gastronômico e transporte.', 420.00);
+*/
 
 -- selects
 select * from tbPassagem;
@@ -154,15 +146,15 @@ select * from tbLogs;
 
 -- procedures
 delimiter $$
-create procedure situacaoPassagem(
-in Id int 
+create procedure SituacaoPassagem(
+in p_Id int 
 )
 	begin
 		select * from tbPassagem
         where IdCliente is null and Situacao = 'Disponivel';
     end $$
     delimiter ;
-call situacaoPassagem(0);
+call SituacaoPassagem(0);
 
 delimiter $$
 create procedure DeletarClientePassagem(
@@ -228,12 +220,107 @@ begin
 end $$
 delimiter ;
 
+-- insert viagem
+delimiter $$
+create procedure InserirViagem(
+	p_DataPartida varchar(50),
+    p_DataRetorno varchar(50),
+    p_Origem varchar(200),
+    p_Descricao varchar(200),
+    p_Destino varchar(200),
+    p_TipoTransporte enum('Ônibus', 'Avião')
+)
+begin
+	insert into tbViagem(DataPartida,DataRetorno, Descricao, Origem, Destino, TipoTransporte)
+	values(str_to_date(p_DataPartida,'%d/%m/%Y %H:%i:%s'), 
+    str_to_date(p_DataRetorno, '%d/%m/%Y %H:%i:%s'),
+    p_Descricao, 
+    p_Origem, 
+    p_Destino, 
+    p_TipoTransporte
+    );
+end $$
+delimiter ;
+call InserirViagem(
+    '18/07/2025 08:00:00',
+    '20/07/2025 18:00:00',
+    'São Paulo',
+    'Viagem ao litoral com paradas em praias.',
+    'Ubatuba',
+    'Ônibus'
+);
+
+call InserirViagem(
+    '05/08/2025 10:30:00',
+    '10/08/2025 22:00:00',
+    'Rio de Janeiro', 'Pacote aéreo para o nordeste brasileiro.', 'Salvador', 'Avião'
+);
+
+call InserirViagem(
+    '10/09/2025 06:00:00',
+    '15/09/2025 21:00:00', 
+    'Belo Horizonte', 'Excursão para trilhas ecológicas.', 'Chapada dos veadeiros', 'Ônibus'
+);
+
+call InserirViagem(
+    '28/11/2025 09:00:00',
+    '01/12/2025 20:00:00',
+    'Curitiba','Viagem de fim de ano com festas e passeios.','Florianópolis','Ônibus'
+);
+
+-- insert passagem
+delimiter $$
+create procedure InserirPassagem(
+	in p_Assento char(5),
+    in p_Valor decimal(8,2),
+    in p_IdViagem int,
+    in p_Situacao varchar(50)
+)
+begin	
+		if exists(select 1 from tbViagem where IdViagem = p_IdViagem) then
+			insert into tbPassagem(Assento, Valor, IdViagem,Situacao)
+				values(p_Assento, 
+                p_Valor,
+                p_IdViagem, 
+                p_Situacao);
+		end if;
+end $$
+delimiter ;
+call InserirPassagem('5D', 250.00, 4,'Disponivel');
+call InserirPassagem('12A', 180.00, 1, 'Disponivel');
+call InserirPassagem('7C', 450.00, 2, 'Disponivel');
+call InserirPassagem('18B', 300.00,3, 'Disponivel');
+call InserirPassagem('5D', 250.00, 4, 'Disponivel');
+
+
+-- insert pacote
+delimiter $$
+ create procedure InserirPacote(
+    in p_IdProduto int,
+    in p_IdPassagem int, 
+    in p_NomePacote varchar(50),
+    in p_Descricao text,
+    in p_Valor decimal(8,2)
+ )
+begin
+	if exists(select 1 from tbProduto where IdProduto = p_IdProduto)
+		and exists(select 1 from tbPassagem where IdPassagem = p_IdPassagem) then
+			insert into tbPacote(IdProduto, IdPassagem, NomePacote, Descricao, Valor)
+					values(p_IdProduto, p_IdPassagem, p_NomePacote, p_Descricao, p_Valor);
+	end if;
+end $$
+delimiter ;
+call InserirPacote(1, 1, 'Pacote Litoral Plus', 'Inclui passeio de lancha e transporte ida e volta.', 479.99);
+call InserirPacote(2, 2, 'Pacote Trilha Nordeste', 'Inclui trilha e transporte aéreo.', 599.99);
+call InserirPacote(3, 3, 'Pacote Mergulho Top', 'Mergulho com cilindro + hospedagem.', 699.99);
+call InserirPacote(4, 4, 'Pacote Gourmet Sul', 'Tour gastronômico e transporte.', 420.00);
+ 
  -- operação de compra
  -- compra de pacote
 delimiter $$
 create procedure ComprarPacote(
-in NomePacote varchar(50), 
-in IdCliente int
+in p_NomePacote varchar(50), 
+in p_IdCliente int
 )
 begin
 	declare vValorPacote decimal(10,2);
@@ -245,11 +332,11 @@ begin
     select IdPacote, Valor, IdPassagem
     into vIdPacote, vValorPacote, vIdPassagem
     from tbPacote
-    where tbPacote.NomePacote = NomePacote
+    where tbPacote.NomePacote = p_NomePacote
     limit 1;
     
   insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor, IdPassagem)
-    values (IdCliente, vIdFuncionario, CURDATE(), vValorPacote, vIdPassagem);
+    values (p_IdCliente, vIdFuncionario, CURDATE(), vValorPacote, vIdPassagem);
 	
     set vIdVenda = last_insert_id();
        insert into tbVendaDetalhe (IdVenda)
@@ -261,23 +348,22 @@ call ComprarPacote('Pacote Gourmet Sul', 4);
 -- compra de passagem
 DELIMITER $$
 create procedure ComprarPassagem(
-    in IdPassagem int, 
-    in IdCliente int 
+    in p_IdPassagem int, 
+    in p_IdCliente int 
 )
 begin
-    declare vIdPassagem int;
     declare vValorPassagem decimal(8,2);
     declare vIdVenda int;
     declare vIdFuncionario int default 1;
 
-    select IdPassagem, Valor
-    into vIdPassagem, vValorPassagem
+    select Valor
+    into vValorPassagem
     from tbPassagem
-    where IdPassagem = IdPassageem
+    where IdPassagem = p_IdPassagem
    limit 1;
     
     insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor, IdPassagem)
-    values (IdCliente, vIdFuncionario, CURDATE(), vValorPassagem, vIdPassagem);
+    values (p_IdCliente, vIdFuncionario, now(), vValorPassagem, p_IdPassagem);
     
     set vIdVenda = last_insert_id();
 
@@ -286,11 +372,11 @@ begin
 
     update tbPassagem
     set Situacao = 'Confirmada', IdCliente = IdCliente
-    where IdPassagem = vIdPassagem;
+    where IdPassagem = p_IdPassagem;
 end $$
 delimiter ;
-call ComprarPassagem('12A', 2);
-
+call ComprarPassagem(3, 2);
+drop procedure ComprarPassagem;
 -- inner joins
 select c.IdCliente, c.Nome as Nome, c.Email,
 p.IdPassagem, p.Assento, p.Valor, p.Situacao
