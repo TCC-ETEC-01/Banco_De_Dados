@@ -1,4 +1,4 @@
- -- drop database dbAnu;
+-- drop database dbAnu;
 create database dbAnu;
 use dbAnu;
 show tables;
@@ -123,10 +123,10 @@ insert into tbProduto (NomeProduto, Valor, Descricao, Quantidade) values
 
 -- insert viagem
 insert into tbViagem (DataRetorno, Descricao, Origem, Destino, TipoTransporte, DataPartida) values
-  (str_to_date('2025-07-20 18:00:00', '%Y-%m-%d %H:%i:%s'), 'Viagem ao litoral com paradas em praias.', 'São Paulo', 'Ubatuba', 'Ônibus', str_to_date('2025-07-18 08:00:00', '%Y-%m-%d %H:%i:%s')),
-  (str_to_date('2025-08-10 22:00:00', '%Y-%m-%d %H:%i:%s'), 'Pacote aéreo para o nordeste brasileiro.', 'Rio de Janeiro', 'Salvador', 'Avião', str_to_date('2025-08-05 10:30:00', '%Y-%m-%d %H:%i:%s')),
-  (str_to_date('2025-09-15 21:00:00', '%Y-%m-%d %H:%i:%s'), 'Excursão para trilhas ecológicas.', 'Belo Horizonte', 'Chapada dos Veadeiros', 'Ônibus', str_to_date('2025-09-10 06:00:00', '%Y-%m-%d %H:%i:%s')),
-  (str_to_date('2025-12-01 20:00:00', '%Y-%m-%d %H:%i:%s'), 'Viagem de fim de ano com festas e passeios.', 'Curitiba', 'Florianópolis', 'Ônibus', str_to_date('2025-11-28 09:00:00', '%Y-%m-%d %H:%i:%s'));
+  (str_to_date('20/07/2025 18:00:00', '%d/%m/%Y %H:%i:%s'), 'Viagem ao litoral com paradas em praias.', 'São Paulo', 'Ubatuba', 'Ônibus', str_to_date('18/07/2025 08:00:00', '%d/%m/%Y %H:%i:%s')),
+  (str_to_date('10/08/2025 22:00:00', '%d/%m/%Y %H:%i:%s'), 'Pacote aéreo para o nordeste brasileiro.', 'Rio de Janeiro', 'Salvador', 'Avião', str_to_date('05/08/2025 10:30:00', '%d/%m/%Y %H:%i:%s')),
+  (str_to_date('15/09/2025 21:00:00', '%d/%m/%Y %H:%i:%s'), 'Excursão para trilhas ecológicas.', 'Belo Horizonte', 'Chapada dos Veadeiros', 'Ônibus', str_to_date('10/09/2025 06:00:00', '%d/%m/%Y %H:%i:%s')),
+  (str_to_date('01/12/2025 20:00:00', '%d/%m/%Y %H:%i:%s'), 'Viagem de fim de ano com festas e passeios.', 'Curitiba', 'Florianópolis', 'Ônibus', str_to_date('28/11/2025 09:00:00', '%d/%m/%Y %H:%i:%s'));
 
 
 -- insert passagem
@@ -261,7 +261,7 @@ call ComprarPacote('Pacote Gourmet Sul', 4);
 -- compra de passagem
 DELIMITER $$
 create procedure ComprarPassagem(
-    in Assento char(5), 
+    in IdPassagem int, 
     in IdCliente int 
 )
 begin
@@ -273,7 +273,7 @@ begin
     select IdPassagem, Valor
     into vIdPassagem, vValorPassagem
     from tbPassagem
-    where Assento = Assento
+    where IdPassagem = IdPassageem
    limit 1;
     
     insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor, IdPassagem)
