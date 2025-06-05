@@ -1,6 +1,6 @@
 -- drop database dbAnu;
--- create database dbAnu;
--- use dbAnu;
+create database dbAnu;
+ use dbAnu;
 show tables;
 
 create table tbCliente (
@@ -14,7 +14,7 @@ create table tbCliente (
 
 create table tbFuncionario (
   Nome varchar(50) not null,
-  Sexo enum('M', 'F') not null,
+  Sexo char(12) not null,
   Email varchar(50) not null,
   Telefone char(11) not null,
   Cargo varchar(50) not null,
@@ -107,7 +107,6 @@ insert into tbCliente (Nome, Sexo, Email, Telefone, Cpf) values
 ('Beatriz Costa', 'F', 'bea@yahoo.com', '11911223344', '34567890123'),
 ('Diego Ramos', 'M', 'diego@outlook.com', '11955667788', '45678901234');
   
-  
 -- insert funcionario
 insert into tbFuncionario (Nome, Sexo, Email, Telefone, Cargo, Cpf, Senha) values
 ('João Pedro', 'M', 'joao@empresa.com', '31987654321', 'Atendente', '56789012345', 'abc12345'),
@@ -122,19 +121,6 @@ insert into tbProduto (NomeProduto, Valor, Descricao, Quantidade) values
 ('Mergulho com Cilindro', 400.00, 'Experiência de mergulho com instrutor', 5),
 ('Tour Gastronômico', 180.00, 'Visita a restaurantes típicos com guia', 15);
 
--- insert passagem
-/*
-insert into tbPassagem (Assento, Valor, IdViagem,Situacao) values
-
-
--- insert pacote
-insert into tbPacote (IdProduto, IdPassagem, NomePacote, Descricao, Valor) values
-(1, 1, 'Pacote Litoral Plus', 'Inclui passeio de lancha e transporte ida e volta.', 479.99),
-(2, 2, 'Pacote Trilha Nordeste', 'Inclui trilha e transporte aéreo.', 599.99),
-(3, 3, 'Pacote Mergulho Top', 'Mergulho com cilindro + hospedagem.', 699.99),
-(4, 4, 'Pacote Gourmet Sul', 'Tour gastronômico e transporte.', 420.00);
-*/
-
 -- selects
 select * from tbPassagem;
 select * from tbProduto;
@@ -145,6 +131,7 @@ select * from tbViagem;
 select * from tbLogs;
 
 -- procedures
+-- verificando situação da passagem
 delimiter $$
 create procedure SituacaoPassagem(
 in p_Id int 
@@ -156,6 +143,7 @@ in p_Id int
     delimiter ;
 call SituacaoPassagem(0);
 
+-- deletando cliente que tem passagem
 delimiter $$
 create procedure DeletarClientePassagem(
 	in p_IdCliente int
@@ -178,6 +166,7 @@ end $$
 delimiter ;
 	call DeletarClientePassagem(1);
     
+-- deletando passagem que tem pacote
 delimiter $$
 create procedure DeletarPassagemPacote(
 	in p_IdPassagem int,
@@ -199,6 +188,7 @@ begin
 end $$
 delimiter ;
 
+-- deletando produto que tem pacote
 delimiter $$
 create procedure DeletarProdutoPacote(
 	in p_IdProduto int,
@@ -279,10 +269,7 @@ create procedure InserirPassagem(
 begin	
 		if exists(select 1 from tbViagem where IdViagem = p_IdViagem) then
 			insert into tbPassagem(Assento, Valor, IdViagem,Situacao)
-				values(p_Assento, 
-                p_Valor,
-                p_IdViagem, 
-                p_Situacao);
+			values(p_Assento, p_Valor,p_IdViagem, p_Situacao);
 		end if;
 end $$
 delimiter ;
@@ -291,7 +278,6 @@ call InserirPassagem('12A', 180.00, 1, 'Disponivel');
 call InserirPassagem('7C', 450.00, 2, 'Disponivel');
 call InserirPassagem('18B', 300.00,3, 'Disponivel');
 call InserirPassagem('5D', 250.00, 4, 'Disponivel');
-
 
 -- insert pacote
 delimiter $$
@@ -323,7 +309,7 @@ in p_NomePacote varchar(50),
 in p_IdCliente int
 )
 begin
-	declare vValorPacote decimal(10,2);
+	declare vValorPacote decimal(8,2);
     declare vIdVenda int;
     declare vIdFuncionario int default 1;
     declare vIdPacote int;
@@ -336,7 +322,7 @@ begin
     limit 1;
     
   insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor, IdPassagem)
-    values (p_IdCliente, vIdFuncionario, CURDATE(), vValorPacote, vIdPassagem);
+    values (p_IdCliente, vIdFuncionario, now(), vValorPacote, vIdPassagem);
 	
     set vIdVenda = last_insert_id();
        insert into tbVendaDetalhe (IdVenda)
@@ -346,7 +332,7 @@ delimiter ;
 call ComprarPacote('Pacote Gourmet Sul', 4);
 
 -- compra de passagem
-DELIMITER $$
+delimiter $$
 create procedure ComprarPassagem(
     in p_IdPassagem int, 
     in p_IdCliente int 
@@ -371,12 +357,12 @@ begin
     values (vIdVenda);
 
     update tbPassagem
-    set Situacao = 'Confirmada', IdCliente = IdCliente
+    set Situacao = 'Indisponivel', IdCliente = IdCliente
     where IdPassagem = p_IdPassagem;
 end $$
 delimiter ;
-call ComprarPassagem(3, 2);
-drop procedure ComprarPassagem;
+call ComprarPassagem(2, 2);
+
 -- inner joins
 select c.IdCliente, c.Nome as Nome, c.Email,
 p.IdPassagem, p.Assento, p.Valor, p.Situacao
