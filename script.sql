@@ -1,4 +1,4 @@
--- drop database dbAnu;
+ -- drop database dbAnu;
 create database dbAnu;
 use dbAnu;
 show tables;
@@ -123,10 +123,10 @@ insert into tbProduto (NomeProduto, Valor, Descricao, Quantidade) values
 
 -- insert viagem
 insert into tbViagem (DataRetorno, Descricao, Origem, Destino, TipoTransporte, DataPartida) values
-('2025-07-20 18:00:00', 'Viagem ao litoral com paradas em praias.', 'São Paulo', 'Ubatuba', 'Ônibus', '2025-07-18 08:00:00'),
-('2025-08-10 22:00:00', 'Pacote aéreo para o nordeste brasileiro.', 'Rio de Janeiro', 'Salvador', 'Avião', '2025-08-05 10:30:00'),
-('2025-09-15 21:00:00', 'Excursão para trilhas ecológicas.', 'Belo Horizonte', 'Chapada dos Veadeiros', 'Ônibus', '2025-09-10 06:00:00'),
-('2025-12-01 20:00:00', 'Viagem de fim de ano com festas e passeios.', 'Curitiba', 'Florianópolis', 'Ônibus', '2025-11-28 09:00:00');
+  (str_to_date('2025-07-20 18:00:00', '%Y-%m-%d %H:%i:%s'), 'Viagem ao litoral com paradas em praias.', 'São Paulo', 'Ubatuba', 'Ônibus', str_to_date('2025-07-18 08:00:00', '%Y-%m-%d %H:%i:%s')),
+  (str_to_date('2025-08-10 22:00:00', '%Y-%m-%d %H:%i:%s'), 'Pacote aéreo para o nordeste brasileiro.', 'Rio de Janeiro', 'Salvador', 'Avião', str_to_date('2025-08-05 10:30:00', '%Y-%m-%d %H:%i:%s')),
+  (str_to_date('2025-09-15 21:00:00', '%Y-%m-%d %H:%i:%s'), 'Excursão para trilhas ecológicas.', 'Belo Horizonte', 'Chapada dos Veadeiros', 'Ônibus', str_to_date('2025-09-10 06:00:00', '%Y-%m-%d %H:%i:%s')),
+  (str_to_date('2025-12-01 20:00:00', '%Y-%m-%d %H:%i:%s'), 'Viagem de fim de ano com festas e passeios.', 'Curitiba', 'Florianópolis', 'Ônibus', str_to_date('2025-11-28 09:00:00', '%Y-%m-%d %H:%i:%s'));
 
 
 -- insert passagem
@@ -228,7 +228,6 @@ begin
 end $$
 delimiter ;
 
- 
  -- operação de compra
  -- compra de pacote
 delimiter $$
