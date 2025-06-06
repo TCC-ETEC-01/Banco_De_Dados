@@ -366,14 +366,19 @@ call ComprarPassagem(2, 2);
 -- inner joins
 select c.IdCliente, c.Nome as Nome, c.Email,
 p.IdPassagem, p.Assento, p.Valor, p.Situacao
-from tbCliente c
-inner join tbPassagem p on c.IdCliente = p.IdCliente;
+from tbPassagem p
+inner join tbCliente c on p.IdCliente = c.IdCliente;
     
 select p.IdPassagem, p.Assento, p.Valor as ValorPassagem, p.Situacao,
        pac.NomePacote, pac.Valor as ValorPacote
 from tbPassagem p
 left join tbPacote pac on p.IdPassagem = pac.IdPassagem;
 
-select pac.IdPacote, pac.NomePacote, prod.NomeProduto, prod.Valor as ValorProduto
+select pac.IdPacote, pac.NomePacote, prod.NomeProduto, p.Assento as Assento, p.Situacao as Situacao
 from tbPacote pac
-inner join tbProduto prod on pac.IdProduto = prod.IdProduto;
+inner join tbProduto prod on pac.IdProduto = prod.IdProduto
+inner join tbPassagem p on pac.IdPassagem = p.IdPassagem;
+
+select  p.IdPassagem, v.Descricao,v.Origem, v.Destino, p.Assento, v.DataPartida, v.DataRetorno as Data_Retorno,  v.TipoTransporte
+from tbPassagem p
+inner join tbViagem v on p.IdViagem = v.IdViagem;
