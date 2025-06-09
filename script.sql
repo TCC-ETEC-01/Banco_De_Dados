@@ -56,7 +56,6 @@ create table tbPassagem (
   DataCompra  timestamp default current_timestamp not null,
   IdViagem int not null,
   IdCliente int,
-  IdTransporte int not null,
   Translado enum('Sim', 'Não') not null,
   Situacao varchar(50)
 );
@@ -79,18 +78,21 @@ create table tbVenda(
     IdCliente int not null,
     IdFuncionario int not null
 );
+/* 
+TERCEIRO MÓDULO
 create table tbTransporte(
 	IdTransporte int primary key auto_increment,
 	TipoTransporte enum('Ônibus', 'Avião') not null,
-    CodigoTransporte int not null,
-	Companhia varchar(100)
+    CodigoTransporte char(5) not null,
+	Companhia varchar(100) not null,
+    IdViagem int not null
 );
+*/
 
 -- criando foreign keys via alter table
 alter table tbPassagem
 add constraint FkViagem foreign key (IdViagem) references tbViagem(IdViagem),
-add constraint FkPassagemCliente foreign key (IdCliente) references tbCliente(IdCliente),
-add constraint FkTransporte foreign key(IdTransporte) references tbTransporte(IdTransporte);
+add constraint FkPassagemCliente foreign key (IdCliente) references tbCliente(IdCliente);
 
 alter table tbPacote 
 add constraint FkPassagemPacote foreign key(IdPassagem) references tbPassagem(IdPassagem),
@@ -104,6 +106,9 @@ add constraint FkIdFuncionario foreign key(IdFuncionario) references tbFuncionar
 alter table tbVendaDetalhe
 add constraint FkIdVenda foreign key(IdVenda) references tbVenda(IdVenda),
 add constraint FkIdPassagemVenda foreign key (IdPassagem) references tbPassagem(IdPassagem);
+
+alter table tbTransporte
+add constraint FkIdViagemTransporte foreign key(IdViagem) references tbViagem(IdViagem);
 
 -- inserts
 -- insert cliente
@@ -126,6 +131,17 @@ insert into tbProduto (NomeProduto, Valor, Descricao, Quantidade) values
 ('Trilha na Mata', 150.00, 'Trilha com guia turístico', 25),
 ('Mergulho com Cilindro', 400.00, 'Experiência de mergulho com instrutor', 5),
 ('Tour Gastronômico', 180.00, 'Visita a restaurantes típicos com guia', 15);
+
+/*
+TERCEIRO MÓDULO
+-- insert Transporte
+insert into tbTransporte(TipoTransporte, CodigoTransporte, Companhia) values
+('Ônibus', 123, 'Gol'),
+('Avião', 1234, 'Latam'),
+('Ônibus', 12, 'Cometa'),
+('Avião', 12345, 'Azul'),
+('Ônibus', 053, 'EMTU');
+*/
 
 -- selects
 select * from tbPassagem;
@@ -233,8 +249,8 @@ begin
     p_Descricao, 
     p_Origem, 
     p_Destino, 
-    p_TipoTransporte
-    );
+	p_TipoTransporte 
+);
 end $$
 delimiter ;
 call InserirViagem(
@@ -264,20 +280,26 @@ call InserirViagem(
     'Curitiba','Viagem de fim de ano com festas e passeios.','Florianópolis','Ônibus'
 );
 
+-- insert transporte
+delimiter $$
+create procedure InserirTransporte(
+	in p_TipoTransporte enum('Avião', 'Ônibus'),
+    in p_CodigoTransporte char(5)
+)
+
 -- insert passagem
 delimiter $$
 create procedure InserirPassagem(
 	in p_Assento char(5),
     in p_Valor decimal(8,2),
     in p_IdViagem int,
-    in p_IdTransporte int,
     in p_Situacao varchar(50),
     in p_Translado enum('Sim', 'Não')
 )
 begin	
 		if exists(select 1 from tbViagem where IdViagem = p_IdViagem) then
-			insert into tbPassagem(Assento, Valor, IdViagem,Situacao, Translado, IdTransporte)
-			values(p_Assento, p_Valor,p_IdViagem, p_Situacao,p_Translado, p_IdTransporte);
+			insert into tbPassagem(Assento, Valor, IdViagem,Situacao, Translado)
+			values(p_Assento, p_Valor,p_IdViagem, p_Situacao,p_Translado);
 		end if;
 end $$
 delimiter ;
@@ -378,12 +400,11 @@ from tbPassagem p
 inner join tbCliente c on p.IdCliente = c.IdCliente;
     
 
-select pac.IdPacote, pac.NomePacote, prod.NomeProduto,p.Assento as Assento, p.Situacao as Situacao, p.Translado,  t.TipoTransporte as Transporte, t.CodigoTransporte as Codigo, t.Companhia
+select pac.IdPacote, pac.NomePacote, prod.NomeProduto,p.Assento as Assento, p.Situacao as Situacao, p.Translado
 from tbPacote pac
 inner join tbProduto prod on pac.IdProduto = prod.IdProduto
 inner join tbPassagem p on pac.IdPassagem = p.IdPassagem;
 
-select  p.IdPassagem,v.Origem, v.Destino, p.Assento,v.Descricao, v.DataPartida as Partida, v.DataRetorno as Retorno,  t.TipoTransporte as Transporte, t.CodigoTransporte as Codigo, t.Companhia
+select  p.IdPassagem,v.Origem, v.Destino, p.Assento,v.Descricao, v.DataPartida as Partida, v.DataRetorno as Retorno
 from tbPassagem p
 inner join tbViagem v on p.IdViagem = v.IdViagem
-inner join tbTransporte t on p.IdTransporte = t.IdTransporte;
