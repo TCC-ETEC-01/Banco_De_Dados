@@ -1,6 +1,6 @@
  -- drop database dbAnu;
 create database dbAnu;
- use dbAnu;
+use dbAnu;
 show tables;
 
 create table tbCliente (
@@ -55,6 +55,7 @@ create table tbPassagem (
   Valor decimal(8,2) not null,
   DataCompra  timestamp default current_timestamp not null,
   IdViagem int not null,
+  IdTransporte int not null,
   IdCliente int,
   Translado enum('Sim', 'Não') not null,
   Situacao varchar(50)
@@ -78,21 +79,20 @@ create table tbVenda(
     IdCliente int not null,
     IdFuncionario int not null
 );
-/* 
-TERCEIRO MÓDULO
+
 create table tbTransporte(
 	IdTransporte int primary key auto_increment,
 	TipoTransporte enum('Ônibus', 'Avião') not null,
     CodigoTransporte char(5) not null,
-	Companhia varchar(100) not null,
-    IdViagem int not null
+	Companhia varchar(100) not null
 );
-*/
+
 
 -- criando foreign keys via alter table
 alter table tbPassagem
 add constraint FkViagem foreign key (IdViagem) references tbViagem(IdViagem),
-add constraint FkPassagemCliente foreign key (IdCliente) references tbCliente(IdCliente);
+add constraint FkPassagemCliente foreign key (IdCliente) references tbCliente(IdCliente),
+add constraint FkTransporte foreign key(IdTransporte) references tbTransporte(IdTransporte);
 
 alter table tbPacote 
 add constraint FkPassagemPacote foreign key(IdPassagem) references tbPassagem(IdPassagem),
@@ -107,8 +107,6 @@ alter table tbVendaDetalhe
 add constraint FkIdVenda foreign key(IdVenda) references tbVenda(IdVenda),
 add constraint FkIdPassagemVenda foreign key (IdPassagem) references tbPassagem(IdPassagem);
 
-alter table tbTransporte
-add constraint FkIdViagemTransporte foreign key(IdViagem) references tbViagem(IdViagem);
 
 -- inserts
 -- insert cliente
@@ -131,17 +129,6 @@ insert into tbProduto (NomeProduto, Valor, Descricao, Quantidade) values
 ('Trilha na Mata', 150.00, 'Trilha com guia turístico', 25),
 ('Mergulho com Cilindro', 400.00, 'Experiência de mergulho com instrutor', 5),
 ('Tour Gastronômico', 180.00, 'Visita a restaurantes típicos com guia', 15);
-
-/*
-TERCEIRO MÓDULO
--- insert Transporte
-insert into tbTransporte(TipoTransporte, CodigoTransporte, Companhia) values
-('Ônibus', 123, 'Gol'),
-('Avião', 1234, 'Latam'),
-('Ônibus', 12, 'Cometa'),
-('Avião', 12345, 'Azul'),
-('Ônibus', 053, 'EMTU');
-*/
 
 -- selects
 select * from tbPassagem;
@@ -239,17 +226,15 @@ create procedure InserirViagem(
     p_DataRetorno varchar(50),
     p_Origem varchar(200),
     p_Descricao varchar(200),
-    p_Destino varchar(200),
-    p_TipoTransporte enum('Ônibus', 'Avião')
+    p_Destino varchar(200)
 )
 begin
-	insert into tbViagem(DataPartida,DataRetorno, Descricao, Origem, Destino, TipoTransporte)
+	insert into tbViagem(DataPartida,DataRetorno, Descricao, Origem, Destino)
 	values(str_to_date(p_DataPartida,'%d/%m/%Y %H:%i:%s'), 
     str_to_date(p_DataRetorno, '%d/%m/%Y %H:%i:%s'),
     p_Descricao, 
     p_Origem, 
-    p_Destino, 
-	p_TipoTransporte 
+    p_Destino
 );
 end $$
 delimiter ;
@@ -258,34 +243,45 @@ call InserirViagem(
     '20/07/2025 18:00:00',
     'São Paulo',
     'Viagem ao litoral com paradas em praias.',
-    'Ubatuba',
-    'Ônibus'
+    'Ubatuba'
 );
 
 call InserirViagem(
     '05/08/2025 10:30:00',
     '10/08/2025 22:00:00',
-    'Rio de Janeiro', 'Pacote aéreo para o nordeste brasileiro.', 'Salvador', 'Avião'
+    'Rio de Janeiro', 'Pacote aéreo para o nordeste brasileiro.', 'Salvador'
 );
 
 call InserirViagem(
     '10/09/2025 06:00:00',
     '15/09/2025 21:00:00', 
-    'Belo Horizonte', 'Excursão para trilhas ecológicas.', 'Chapada dos veadeiros', 'Ônibus'
+    'Belo Horizonte', 'Excursão para trilhas ecológicas.', 'Chapada dos veadeiros'
 );
 
 call InserirViagem(
     '28/11/2025 09:00:00',
     '01/12/2025 20:00:00',
-    'Curitiba','Viagem de fim de ano com festas e passeios.','Florianópolis','Ônibus'
+    'Curitiba','Viagem de fim de ano com festas e passeios.','Florianópolis'
 );
 
 -- insert transporte
 delimiter $$
 create procedure InserirTransporte(
 	in p_TipoTransporte enum('Avião', 'Ônibus'),
-    in p_CodigoTransporte char(5)
+    in p_CodigoTransporte char(5),
+    in p_Companhia varchar(100)
 )
+begin	
+			insert into tbTransporte(TipoTransporte, CodigoTransporte, Companhia)
+			values(p_TipoTransporte, p_CodigoTransporte, p_Companhia);
+end $$
+delimiter ;
+call InserirTransporte('Ônibus', 123,'Gol');
+call InserirTransporte('Avião', 1234,'Latam');
+call InserirTransporte('Ônibus', 12,'Cometa');
+call InserirTransporte('Avião', 12345,'Azul');
+call InserirTransporte('Ônibus', 053, 'EMTU');
+call InserirTransporte('Avião', '123A','Azul');
 
 -- insert passagem
 delimiter $$
@@ -294,20 +290,22 @@ create procedure InserirPassagem(
     in p_Valor decimal(8,2),
     in p_IdViagem int,
     in p_Situacao varchar(50),
-    in p_Translado enum('Sim', 'Não')
+    in p_Translado enum('Sim', 'Não'),
+    in p_IdTransporte int
 )
 begin	
 		if exists(select 1 from tbViagem where IdViagem = p_IdViagem) then
-			insert into tbPassagem(Assento, Valor, IdViagem,Situacao, Translado)
-			values(p_Assento, p_Valor,p_IdViagem, p_Situacao,p_Translado);
+			insert into tbPassagem(Assento, Valor, IdViagem,Situacao, Translado, IdTransporte)
+			values(p_Assento, p_Valor,p_IdViagem, p_Situacao,p_Translado, p_IdTransporte);
 		end if;
 end $$
 delimiter ;
-call InserirPassagem('5D', 250.00, 4,'Disponivel', 'Sim');
-call InserirPassagem('12A', 180.00, 1, 'Disponivel', 'Não');
-call InserirPassagem('7C', 450.00, 2, 'Disponivel', 'Sim');
-call InserirPassagem('18B', 300.00,3, 'Disponivel', 'Não');
-call InserirPassagem('5D', 250.00, 4, 'Disponivel', 'Sim');
+call InserirPassagem('5D', 250.00, 4,'Disponivel', 'Sim', 1);
+call InserirPassagem('12A', 180.00, 1, 'Disponivel', 'Não', 2);
+call InserirPassagem('7C', 450.00, 2, 'Disponivel', 'Sim', 3);
+call InserirPassagem('18B', 300.00,3, 'Disponivel', 'Não', 4);
+call InserirPassagem('5D', 250.00, 4, 'Disponivel', 'Sim', 5);
+call InserirPassagem('11A' ,300, 5, 'Disponivel', 'Sim', 6);
 
 -- insert pacote
 delimiter $$
@@ -332,34 +330,52 @@ call InserirPacote(3, 3, 'Pacote Mergulho Top', 'Mergulho com cilindro + hospeda
 call InserirPacote(4, 4, 'Pacote Gourmet Sul', 'Tour gastronômico e transporte.', 420.00);
  
  -- operação de compra
+ /*
  -- compra de pacote
 delimiter $$
 create procedure ComprarPacote(
-in p_NomePacote varchar(50), 
-in p_IdCliente int
+    in p_IdPacote int, 
+    in p_IdCliente int
 )
 begin
-	declare vValorPacote decimal(8,2);
+    declare vValorPacote decimal(8,2);
     declare vIdVenda int;
     declare vIdFuncionario int default 1;
-    declare vIdPacote int;
+	declare vNomePacote varchar(50);
     declare vIdPassagem int;
 
-    select IdPacote, Valor, IdPassagem
-    into vIdPacote, vValorPacote, vIdPassagem
-    from tbPacote
-    where tbPacote.NomePacote = p_NomePacote
-    limit 1;
-    
-  insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor, IdPassagem)
-    values (p_IdCliente, vIdFuncionario, now(), vValorPacote, vIdPassagem);
-	
-    set vIdVenda = last_insert_id();
-       insert into tbVendaDetalhe (IdVenda)
-    values (vIdVenda);
-end  $$
+    -- Verifica se o pacote existe
+    if exists (select 1 from tbPacote where IdPacote = p_IdPacote) then
+        -- Busca os dados do pacote
+        select IdPacote, Valor, IdPassagem
+        into p_IdPacote, vValorPacote, vIdPassagem
+        from tbPacote
+        where IdPacote = p_IdPacote
+        limit 1;
+
+        -- Verifica se IdPassagem não é nulo antes de tentar inserir
+        if p_IdPacote is not null then
+            insert into tbVenda (IdCliente, IdFuncionario, DataVenda, Valor, IdPassagem)
+            values (p_IdCliente, vIdFuncionario, now(), vValorPacote, vIdPassagem);
+
+            set vIdVenda = last_insert_id();
+
+            insert into tbVendaDetalhe (IdVenda)
+            values (vIdVenda);
+        else
+            signal sqlstate '45000'
+            set message_text = 'Pacote encontrado, mas IdPassagem está nulo.';
+        end if;
+    else
+        signal sqlstate '45000'
+        set message_text = 'Pacote não encontrado.';
+    end if;
+
+end $$
 delimiter ;
-call ComprarPacote('Pacote Gourmet Sul', 4);
+drop procedure ComprarPacote;
+call ComprarPacote(4, 4);
+*/
 
 -- compra de passagem
 delimiter $$
@@ -371,7 +387,8 @@ begin
     declare vValorPassagem decimal(8,2);
     declare vIdVenda int;
     declare vIdFuncionario int default 1;
-
+	
+    if exists(select * from tbPassagem where IdPassagem = p_IdPassagem) then
     select Valor
     into vValorPassagem
     from tbPassagem
@@ -389,9 +406,10 @@ begin
     update tbPassagem
     set Situacao = 'Indisponivel', IdCliente = IdCliente
     where IdPassagem = p_IdPassagem;
+end if;
 end $$
 delimiter ;
-call ComprarPassagem(2, 2);
+call ComprarPassagem(6,1);
 
 -- inner joins
 select c.IdCliente, c.Nome as Nome, c.Email,
@@ -399,12 +417,13 @@ p.IdPassagem, p.Assento, p.Valor, p.Situacao
 from tbPassagem p
 inner join tbCliente c on p.IdCliente = c.IdCliente;
     
-
-select pac.IdPacote, pac.NomePacote, prod.NomeProduto,p.Assento as Assento, p.Situacao as Situacao, p.Translado
+select pac.IdPacote, pac.NomePacote,  prod.NomeProduto,p.Assento as Assento, p.Situacao as Situacao, p.Translado,  t.TipoTransporte as Transporte, t.Companhia, t.CodigoTransporte as Cod_Transporte
 from tbPacote pac
 inner join tbProduto prod on pac.IdProduto = prod.IdProduto
-inner join tbPassagem p on pac.IdPassagem = p.IdPassagem;
+inner join tbPassagem p on pac.IdPassagem = p.IdPassagem
+inner join tbTransporte t on p.IdTransporte = t.IdTransporte;
 
-select  p.IdPassagem,v.Origem, v.Destino, p.Assento,v.Descricao, v.DataPartida as Partida, v.DataRetorno as Retorno
+select  p.IdPassagem,v.Origem, v.Destino, p.Assento,v.Descricao, v.DataPartida as Partida, v.DataRetorno as Retorno, t.TipoTransporte as Transporte, t.Companhia, t.CodigoTransporte as Cod_Transporte
 from tbPassagem p
 inner join tbViagem v on p.IdViagem = v.IdViagem
+inner join tbTransporte t on p.IdTransporte = t.IdTransporte;
