@@ -64,7 +64,8 @@ show tables;
 	create table tbLogs(
 		Usuario varchar(50) not null,
 		DataLog timestamp default current_timestamp not null,
-		Acao Text not null
+		Acao Text not null,
+        Descricao Text not null
 	);
 	create table tbVendaDetalhe(
 		IdVenda int not null,
@@ -154,6 +155,7 @@ show tables;
 	call SituacaoPassagem(0);
 
 	-- deletando cliente que tem passagem
+    /*
 	delimiter $$
 	create procedure DeletarClientePassagem(
 		in p_IdCliente int
@@ -197,7 +199,8 @@ show tables;
 		where IdPassagem = p_IdPassagem;
 	end $$
 	delimiter ;
-
+*/
+/*
 	-- deletando produto que tem pacote
 	delimiter $$
 	create procedure DeletarProdutoPacote(
@@ -219,7 +222,7 @@ show tables;
 		where IdProduto = p_IdProduto;
 	end $$
 	delimiter ;
-
+*/
 	-- insert viagem
 	delimiter $$
 	create procedure InserirViagem(
@@ -428,3 +431,4 @@ show tables;
 	from tbPassagem p
 	inner join tbViagem v on p.IdViagem = v.IdViagem
 	inner join tbTransporte t on p.IdTransporte = t.IdTransporte;
+select * from tbLogs;
